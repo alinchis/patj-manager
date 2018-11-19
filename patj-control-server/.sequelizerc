@@ -1,0 +1,15 @@
+const path = require('path');
+
+module.exports = {
+    // Config: This file contains our application configuration settings such as database configuration.
+    "config": path.resolve('./server/config', 'config.json'),
+
+    // Models: This is where we save our database models
+    "models-path": path.resolve('./server/models'),
+
+    // Seeders: This folder saves our application seed data. Seed data are mock data used for testing or templating purpose.
+    "seeders-path": path.resolve('./server/seeders'),
+
+    // Migrations: This folder would hold our application migration data
+    "migrations-path": path.resolve('./server/migrations')
+};
