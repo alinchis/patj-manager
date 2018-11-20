@@ -54,7 +54,7 @@
         <object
           v-if="this.currentUatSiruta"
           id="pdf_object"
-          :data="currentPdf"
+          :data="this.currentPdf"
           type="application/pdf"
         >
           alt : <a href="">test.pdf</a>
@@ -91,7 +91,7 @@ export default {
       return this.currentSelection.uat_siruta
     },
     currentPdf () {
-      let path = 'http://localhost:3333/static/' + this.currentSelection.uat_siruta + '.pdf#zoom=100'
+      let path = this.currentSelection.uat_pdf_path
       // console.log('@project/table: pdf file path: ', path)
       return path
     },
@@ -115,6 +115,8 @@ export default {
         this.$store.dispatch('ACT_CLEAR_CURRENT_UAT')
       } else if(item.code_siruta) {
         console.log('@project/table/itemSelect/if: siruta: ', item.code_siruta)
+        // clear current UAT from current_selection
+        this.$store.dispatch('ACT_CLEAR_CURRENT_UAT')
         // notify selected item to the store
         this.$store.dispatch('ACT_SET_CURRENT_UAT', item.code_siruta)
       }

@@ -7,7 +7,13 @@ const { RO_SIRUTA_county } = model;
 class RO_SIRUTA_counties {
   // CREATE a record on server
   static add(item) {
-    const { id, name_ro, name_en, code_fsj, code_auto, region_id } = item;
+    const id = item[0];
+    const name_ro = item[1];
+    const name_en = item[2];
+    const code_fsj = item[3];
+    const code_auto = item[4];
+    const region_id = item[5];
+
     return RO_SIRUTA_county
     .findOrCreate({
       where: {id: id},
@@ -20,9 +26,9 @@ class RO_SIRUTA_counties {
       }
     })
     .spread((record, created) => created)
-    .then(() => {
-      res.status(200).send(RO_SIRUTA_region.count())
-    })
+    .then((created) => {
+      console.log('@ADD County item: ', created)
+    });
   };
 
   // GET all records

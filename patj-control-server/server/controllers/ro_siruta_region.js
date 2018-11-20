@@ -7,7 +7,11 @@ const { RO_SIRUTA_region } = model;
 class RO_SIRUTA_regions {
   // CREATE a record on server
   static add(item) {
-    const { id, code_siruta, name_ro, name_en } = item;
+    const id = item[0];
+    const code_siruta = item[1];
+    const name_ro = item[2];
+    const name_en = item[3];
+
     return RO_SIRUTA_region
     .findOrCreate({
       where: {id: id},
@@ -18,9 +22,9 @@ class RO_SIRUTA_regions {
       }
     })
     .spread((record, created) => created)
-    .then(() => {
-      res.status(200).send(RO_SIRUTA_region.count())
-    })
+    .then((created) => {
+      console.log('@ADD Region item: ', created)
+    });
   };
 
   // GET all records

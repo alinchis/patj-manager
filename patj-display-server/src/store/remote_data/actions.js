@@ -9,6 +9,7 @@ ACT_LOAD_UATS: function ({ commit, state }) {
   let counties = state.counties
   counties.forEach( (county, index) => {
     console.log('@store: county_siruta', county.code_siruta)
+    // send request to control server
     Axios.get('/api/' + county.code_siruta + '/uat')
     .then( (response) => { commit('MUT_LOAD_UATS', { list: response.data, index: index})})
     .catch(function (error) {

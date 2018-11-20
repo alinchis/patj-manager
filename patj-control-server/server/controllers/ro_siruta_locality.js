@@ -7,24 +7,23 @@ const { RO_SIRUTA_locality } = model;
 class RO_SIRUTA_localities {
   // CREATE a record on server
   static add(item) {
-    const {
-      code_siruta,
-      name_ro,
-      name_en,
-      code_postal,
-      county_id,
-      code_siruta_sup,
-      code_type,
-      code_level,
-      code_med,
-      region_id,
-      code_fsj,
-      code_fs2,
-      code_fs3,
-      code_fsl,
-      rank,
-      fictional
-    } = item
+    const code_siruta = item[0];
+    const name_ro = item[1];
+    const name_en = item[2];
+    const code_postal = item[3];
+    const county_id = item[4];
+    const code_siruta_sup = item[5];
+    const code_type = item[6];
+    const code_level = item[7];
+    const code_med = item[8];
+    const region_id = item[9];
+    const code_fsj = item[10];
+    const code_fs2 = item[11];
+    const code_fs3 = item[12];
+    const code_fsl = item[13];
+    const rank = item[14];
+    const fictional = item[15];
+
     return RO_SIRUTA_locality
     .findOrCreate({
       where: {code_siruta: code_siruta},
@@ -46,17 +45,10 @@ class RO_SIRUTA_localities {
         fictional
       }
     })
-    .spread((item, created) => {
-      // console.log(item.get({
-      //   plain: true
-      // }))
-      // console.log(item.code_siruta + ' Locality: ' + created)
-      return
-    })
     .spread((record, created) => created)
-    .then(() => {
-      res.status(200).send(RO_SIRUTA_region.count())
-    })
+    .then((created) => {
+      console.log('@ADD Locality item: ', created)
+    });
   };
 
   // GET all records

@@ -10,6 +10,8 @@ export default {
     'uat_index': '',
     'uat_siruta': '',
     'uat_name_ro': '',
+    'uat_name_en': '',
+    'uat_pdf_path': ''
   },
   'counties': [
     {

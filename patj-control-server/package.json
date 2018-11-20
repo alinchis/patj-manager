@@ -25,9 +25,12 @@
     "babel-core": "^6.26.3",
     "body-parser": "^1.18.3",
     "csv": "^4.0.0",
+    "d3": "^5.7.0",
+    "d3-node": "^2.1.0",
     "express": "^4.16.4",
     "fs": "0.0.1-security",
     "morgan": "^1.9.1",
+    "node-latex": "^2.4.4",
     "pg": "^7.6.1",
     "pg-hstore": "^2.3.2",
     "sequelize": "^4.41.2"
