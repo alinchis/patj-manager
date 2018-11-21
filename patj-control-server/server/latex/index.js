@@ -34,8 +34,11 @@ async function createTex(code_siruta) {
 		metodologie: 'Metoda utilizata pentru calculul indicatorului "populatia dupa domiciliu" este metoda componentelor: a) la nivel de total tara, in functie de soldul sporului natural si soldul migratiei internationale definitive: P(t+1) = P(t) + N(t,t+1) - D(t,t+1) + dM(t,t+1) + Cv unde: P(t+1) - populatia cu domiciliul in tara la momentul t+1; P(t) - populatia cu domiciliul in tara la momentul t; N(t,t+1) - numarul de nascuti-vii in perioada (t , t+1), ai caror mame au avut domiciliul in Romania la data nasterii; D(t,t+1) - numarul de persoane care au decedat in perioada (t , t+1), care aveau domiciliul in Romania la data decesului; dM(t,t+1) - soldul migratiei internationale definitive (imigranti - emigranti), in perioada (t , t+1); Cv - coeficient de ajustare a varstelor. b) in profil teritorial, la diferite niveluri administrativ-teritoriale pentru care se calculeaza, in functie de soldul sporului natural, soldul migratiei internationale definitive si soldul migratiei interne cu schimbarea domiciliului: P(t+1) = P(t) + N(t,t+1) - D(t,t+1) + dM(t,t+1) + dm(t,t+1) + Cv unde: P(t+1) - populatia cu domiciliul in tara la momentul t+1; P(t) - populatia cu domiciliul in tara la momentul t; N(t,t+1) - numarul de nascuti-vii in perioada (t , t+1), ai caror mame au avut domiciliul in Romania la data nasterii; D(t,t+1) - numarul de persoane care au decedat in perioada (t , t+1), care aveau domiciliul in Romania la data decesului; dM(t,t+1) - soldul migratiei internationale definitive (imigranti - emigranti), in perioada (t , t+1); dm(t,t+1) - soldul migratiei interne cu schimbarea domiciliului (sositi - plecati), in perioada (t , t+1); Cv - coeficient de ajustare a varstelor. Varsta este exprimata in ani impliniti (de exemplu, o persoana avand varsta de 24 ani si 11 luni este considerata ca avand varsta de 24 ani). '
 	};
 
-	// get data from DB for given code_siruta
+	// get UAT info from DB for given code_siruta
 	const uat = await Localities.getLocalUAT(code_siruta);
+	// get UAT list of components for given code_siruta
+	const loc_list = await Localities.getLocalUATList(code_siruta);
+	console.log('UAT list: ', loc_list);
 
 	// read file into array
 	readArr = fs.readFileSync(read_path)
@@ -69,7 +72,16 @@ async function createTex(code_siruta) {
 			const rank = 'Rang: ' + uat.rank + '\n';
 
 			writeArr.push(name_ro);
+			// insert UAT localities list
 			writeArr.push(loc_list);
+			writeArr.push('\\begin{enumerate}\n');
+			writeArr.push('\\item testing\n');
+			// for (let item in loc_list) {
+			// 	const line = '\\item ' + item.code_siruta + ' ' + item.name_ro + '\n';
+			// 	console.log('!!!!!!!!!!!!!!',line);
+			// 	writeArr.push(line);
+			// };
+			writeArr.push('\\end{enumerate}\n');
 			writeArr.push(code_siruta);
 			writeArr.push(rank);
 

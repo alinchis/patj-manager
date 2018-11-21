@@ -82,13 +82,24 @@ class RO_SIRUTA_localities {
   //     })
   // };
   static async getLocalUAT(siruta) {
-    const res = await RO_SIRUTA_locality
+    const list = await RO_SIRUTA_locality
       .findAll({
         where: { code_siruta: siruta },
         raw: true
       });
-    return res[0];
+    return list[0];
   };
+
+  // GET::LOCAL UAT list of components for given code_siruta
+  static async getLocalUATList(siruta) {
+    const list = await RO_SIRUTA_locality
+      .findAll({
+        where: { code_siruta_sup: siruta },
+        raw: true
+      });
+    return list;
+  };
+
 
   // GET::CLIENT all localities included in a UAT via code_siruta_sup = uat:code_siruta
   static localities(req, res) {
