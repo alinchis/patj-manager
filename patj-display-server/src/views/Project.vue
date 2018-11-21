@@ -56,9 +56,7 @@
           id="pdf_object"
           :data="this.currentPdf"
           type="application/pdf"
-        >
-          alt : <a href="">test.pdf</a>
-        </object>
+        ></object>
       </md-app-content>
     </md-app>
   </div>

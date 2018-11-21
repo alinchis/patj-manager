@@ -1,4 +1,5 @@
 'use strict';
+
 export default (sequelize, DataTypes) => {
   const RO_SIRUTA_county = sequelize.define('RO_SIRUTA_county', {
     name_ro: {

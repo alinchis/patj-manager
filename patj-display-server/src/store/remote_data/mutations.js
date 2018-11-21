@@ -74,13 +74,15 @@ MUT_CLEAR_CURRENT_UAT: ( state ) => {
   state.current_selection.uat_index = ''
   state.current_selection.uat_name_ro = ''
   state.current_selection.uat_name_en = ''
+  state.current_selection.uat_pdf_path = ''
 
   // send request to control-server to delete the pdf file
   Axios.get('/api/uat/' + uat_siruta + '/pdfdelete')
-  .then( (response) => { if (response.data == true) {
-    console.log('@store: MUT_CLEAR_CURRENT_UAT > Pdf file deleted on server')
+  .then( (response) => {
+    // !!! for some reason it does not go on this branch
+    console.log('@store: MUT_CLEAR_CURRENT_UAT > Pdf file deleted on server: ', response.data)
     state.current_selection.uat_pdf_path = ''
-  }})
+  })
   // error management
   .catch(function (error) {
     if (error.response) {

@@ -1,11 +1,12 @@
 'use strict';
 
+import sequelize from 'sequelize';
 import model from '../models';
 
 const { RO_SIRUTA_locality } = model;
 
 class RO_SIRUTA_localities {
-  // CREATE a record on server
+  // CREATE::LOCAL a record on server
   static add(item) {
     const code_siruta = item[0];
     const name_ro = item[1];
@@ -51,14 +52,14 @@ class RO_SIRUTA_localities {
     });
   };
 
-  // GET all records
+  // GET::CLIENT all records
   static list(req, res) {
     return RO_SIRUTA_locality
     .findAll()
     .then(records => res.status(200).send(records));
   };
 
-  // GET all UAT from given County via county_id
+  // GET::CLIENT all UAT from given County via county_id
   static UATlist(req, res) {
     const { sirutaSup } = req.params
     return RO_SIRUTA_locality
@@ -68,7 +69,28 @@ class RO_SIRUTA_localities {
     .then(records => res.status(200).send(records));
   };
 
-  // GET all localities included in a UAT via code_siruta_sup = uat:code_siruta
+  // GET::LOCAL UAT data for given code_siruta
+  // static getLocalUAT(siruta) {
+  //   return RO_SIRUTA_locality
+  //     .findAll({
+  //       where: { code_siruta: siruta },
+  //       raw: true
+  //     })
+  //     .then(function(uat) {
+  //       console.log('@Latex: test...', uat[0])
+  //       return uat[0];
+  //     })
+  // };
+  static async getLocalUAT(siruta) {
+    const res = await RO_SIRUTA_locality
+      .findAll({
+        where: { code_siruta: siruta },
+        raw: true
+      });
+    return res[0];
+  };
+
+  // GET::CLIENT all localities included in a UAT via code_siruta_sup = uat:code_siruta
   static localities(req, res) {
     const { sirutaUAT } = req.params
     return RO_SIRUTA_locality

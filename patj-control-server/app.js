@@ -24,6 +24,10 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // open static folder to the network to deliver files (pdf)
 app.use('/static', express.static(path.join(__dirname, 'static')));
 
+// test latex creation file
+// import LatexFile from './server/latex';
+// LatexFile.createTex('146502');
+
 // API route: UPLOAD initial data to PostgreSQL
 // dbinit.uploadData();
 

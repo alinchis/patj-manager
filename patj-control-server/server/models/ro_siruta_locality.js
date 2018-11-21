@@ -1,5 +1,6 @@
 'use strict';
-module.exports = (sequelize, DataTypes) => {
+
+export default (sequelize, DataTypes) => {
   const RO_SIRUTA_locality = sequelize.define('RO_SIRUTA_locality', {
     code_siruta: {
       type: DataTypes.STRING,
@@ -94,6 +95,9 @@ module.exports = (sequelize, DataTypes) => {
     });
     RO_SIRUTA_locality.belongsTo(models.RO_SIRUTA_region, {
       foreignKey: 'region_id'
+    });
+    RO_SIRUTA_locality.belongsTo(models.pop_dom_SV_107D, {
+      foreignKey: 'code_siruta'
     });
   };
   return RO_SIRUTA_locality;

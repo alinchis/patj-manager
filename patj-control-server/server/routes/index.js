@@ -4,7 +4,8 @@ import Books from '../controllers/book';
 import Regions from '../controllers/ro_siruta_region';
 import Counties from '../controllers/ro_siruta_county';
 import Localities from '../controllers/ro_siruta_locality';
-import LatexFile from '../latex'
+import POP_dom_SV_107Ds from '../controllers/pop_dom_sv_107d';
+import LatexFile from '../latex';
 // import the function to load initial data to DB
 // import dbinit from '../dbinit';
 
@@ -32,6 +33,8 @@ export default (app) => {
   app.get('/api/uat/:sirutaUAT/pdfcreate', LatexFile.createPdf);
   // API route: delete Pdf file for given UAT
   app.get('/api/uat/:sirutaUAT/pdfdelete', LatexFile.deletePdf);
+  // API route: GET all population for SV
+  app.get('/api/uat/SV/pop', POP_dom_SV_107Ds.list);
 
   // // API route for user to create a book
   // app.post('/api/users/:userId/books', Books.create);
