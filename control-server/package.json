@@ -1,7 +1,7 @@
 {
   "name": "patj-control-server",
   "version": "0.0.1",
-  "description": "PATJ-manager control server",
+  "description": "PATJ-Manager control server",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

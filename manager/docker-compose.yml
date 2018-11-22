@@ -1,0 +1,36 @@
+version: "3"
+
+services:
+
+  control-server:
+    build: "../docker-contairers/control-server"
+    image: alinchis/control-server
+    volumes:
+      - "./control-server:/root/patj-manager/control-server"
+    working_dir: /root/patj-manager/control-server
+    command: bash -c "sequelize db:migrate && npm start"
+    depends_on:
+      - "pgsql-server"
+    ports:
+      - "3333:3030"
+
+  display-server:
+    build: "../docker-contairers/display-server"
+    image: alinchis/display-server
+    volumes:
+      - "./display-server:/root/patj-manager/display-server"
+    working_dir: /root/patj-manager/display-server
+    command: bash -c "npm rebuild node-sass && npm run serve"
+    ports:
+      - "8888:8080"
+    depends_on:
+      - "control-server"
+
+  pgsql-server:
+    build: "../docker-contairers/pgsql-server"
+    image: alinchis/pgsql-server
+    restart: always
+    volumes:
+      - "./docker-data/postgresql:/var/lib/postgresql"
+    ports:
+      - "5555:5432"
