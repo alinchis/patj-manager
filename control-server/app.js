@@ -29,7 +29,7 @@ app.use('/static', express.static(path.join(__dirname, 'static')));
 // LatexFile.createTex('146502');
 
 // API route: UPLOAD initial data to PostgreSQL
-// dbinit.uploadData();
+dbinit.uploadData();
 
 // load routes from /routes folder
 routes(app);

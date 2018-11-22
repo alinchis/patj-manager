@@ -3,7 +3,7 @@
     "username": "thor",
     "password": "mysecretpassword",
     "database": "patj",
-    "host": "sql-server",
+    "host": "pgsql-server",
     "port": "5432",
     "dialect": "postgres",
     "pool": {

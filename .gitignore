@@ -24,4 +24,4 @@ yarn-error.log*
 *.pdf
 
 # docker-data PostgreSQL
-**/PostgreSQL
+**/docker-data
