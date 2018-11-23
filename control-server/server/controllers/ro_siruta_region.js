@@ -31,8 +31,16 @@ class RO_SIRUTA_regions {
   static list(req, res) {
     return RO_SIRUTA_region
     .findAll()
-    .then(records => res.status(200).send(records));
-  }
+    .then(records => res.status(200).send({
+      success: true,
+      message: 'Retrieved ' + records.length + ' records',
+      records
+    }))
+    .catch(err => res.status(200).send({
+      success: false,
+      message: err
+    }))
+  };
 };
 
 export default RO_SIRUTA_regions;

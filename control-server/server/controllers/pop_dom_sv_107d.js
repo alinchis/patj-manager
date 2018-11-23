@@ -74,16 +74,22 @@ class POP_dom_SV_107Ds {
       }
     })
     .spread((record, created) => created)
-    .then((created) => {
-      console.log('@ADD Population item: ', created)
-    });
+    .then((created) => res.status(201).send({
+      success: true,
+      message: 'POP_dom_SV_107Ds with SIRUTA = ' + code_siruta + 'added successfully',
+      created
+    }))
   };
 
   // GET all records
   static list(req, res) {
     return pop_dom_SV_107D
     .findAll()
-    .then(records => res.status(200).send(records));
+    .then(records => res.status(200).send({
+      success: true,
+      message: 'Query successful: ' + records.lenght + ' found',
+      records
+    }));
   };
 
 };

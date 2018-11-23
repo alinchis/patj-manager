@@ -1,16 +1,11 @@
 // import controllers from /controllers folder
-import Users from '../controllers/user';
-import Books from '../controllers/book';
 import Regions from '../controllers/ro_siruta_region';
 import Counties from '../controllers/ro_siruta_county';
 import Localities from '../controllers/ro_siruta_locality';
 import POP_dom_SV_107Ds from '../controllers/pop_dom_sv_107d';
-import LatexFile from '../latex';
-// import the function to load initial data to DB
-// import dbinit from '../dbinit';
+// import LatexFile from '../latex';
+// import Tempo from '../insse';
 
-// import fs
-var fs = require('fs');
 
 export default (app) => {
 
@@ -20,7 +15,7 @@ export default (app) => {
   }));
 
   // API route: UPLOAD initial data to PostgreSQL
-  // app.post('/api/dbinit', dbinit.uploadData());
+  // app.get('/api/dbinit', dbinit.uploadData);
   // API route: GET all regions
   app.get('/api/regions', Regions.list);
   // API route: GET all Counties
@@ -30,11 +25,15 @@ export default (app) => {
   // API route: GET all localities from UAT
   app.get('/api/:sirutaUAT/localities', Localities.localities);
   // API route: create Pdf file for given UAT
-  app.get('/api/uat/:sirutaUAT/pdfcreate', LatexFile.createPdf);
+  // app.get('/api/uat/:sirutaUAT/pdfcreate', LatexFile.createPdf);
   // API route: delete Pdf file for given UAT
-  app.get('/api/uat/:sirutaUAT/pdfdelete', LatexFile.deletePdf);
+  // app.get('/api/uat/:sirutaUAT/pdfdelete', LatexFile.deletePdf);
   // API route: GET all population for SV
   app.get('/api/uat/SV/pop', POP_dom_SV_107Ds.list);
+
+  ////////////////////////////////////////////////////////////////////
+  /// API routes for INSSE Tempo online database
+  // app.get('/api/tempo/level2', Tempo.readLevel2);
 
   // // API route for user to create a book
   // app.post('/api/users/:userId/books', Books.create);

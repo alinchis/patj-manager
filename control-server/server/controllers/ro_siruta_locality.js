@@ -47,16 +47,23 @@ class RO_SIRUTA_localities {
       }
     })
     .spread((record, created) => created)
-    .then((created) => {
-      console.log('@ADD Locality item: ', created)
-    });
+    .then((created) => console.log('@ADD Locality item: ', created))
+    .catch(err => console.log(err));
   };
 
   // GET::CLIENT all records
   static list(req, res) {
     return RO_SIRUTA_locality
     .findAll()
-    .then(records => res.status(200).send(records));
+    .then(records => res.status(200).send({
+      success: true,
+      message: 'Retrieved ' + records.length + ' records',
+      records
+    }))
+    .catch(err => res.status(200).send({
+      success: false,
+      message: err
+    }))
   };
 
   // GET::CLIENT all UAT from given County via county_id
@@ -66,7 +73,15 @@ class RO_SIRUTA_localities {
     .findAll({
       where: { code_siruta_sup: sirutaSup }
     })
-    .then(records => res.status(200).send(records));
+    .then(records => res.status(200).send({
+      success: true,
+      message: 'Retrieved ' + records.length + ' records',
+      records
+    }))
+    .catch(err => res.status(200).send({
+      success: false,
+      message: err
+    }))
   };
 
   // GET::LOCAL UAT data for given code_siruta
@@ -81,23 +96,31 @@ class RO_SIRUTA_localities {
   //       return uat[0];
   //     })
   // };
-  static async getLocalUAT(siruta) {
-    const list = await RO_SIRUTA_locality
+  static async getLocalUAT(req, res, siruta) {
+    const records = await RO_SIRUTA_locality
       .findAll({
         where: { code_siruta: siruta },
         raw: true
-      });
-    return list[0];
+      })
+      .then(records => {
+        console.log('Retrieved ' + records.length + ' records');
+        records
+      })
+      .catch(err => console.log(err))
   };
 
   // GET::LOCAL UAT list of components for given code_siruta
   static async getLocalUATList(siruta) {
-    const list = await RO_SIRUTA_locality
+    const records = await RO_SIRUTA_locality
       .findAll({
         where: { code_siruta_sup: siruta },
         raw: true
-      });
-    return list;
+      })
+      .then(records => {
+        console.log('Retrieved ' + records.length + ' records');
+        records
+      })
+      .catch(err => console.log(err))
   };
 
 
@@ -108,7 +131,15 @@ class RO_SIRUTA_localities {
     .findAll({
       where: { code_siruta_sup: sirutaUAT }
     })
-    .then(records => res.status(200).send(records));
+    .then(records => res.status(200).send({
+      success: true,
+      message: 'Retrieved ' + records.length + ' records',
+      records
+    }))
+    .catch(err => res.status(200).send({
+      success: false,
+      message: err
+    }))
   };
 };
 

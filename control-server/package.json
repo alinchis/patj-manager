@@ -21,6 +21,7 @@
     "nodemon": "^1.18.6"
   },
   "dependencies": {
+    "axios": "^0.18.0",
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.3",
     "body-parser": "^1.18.3",

@@ -3,10 +3,8 @@ import express from 'express';
 import logger from 'morgan';
 import bodyParser from 'body-parser';
 import routes from './server/routes';
-import fs from 'fs';
 import path from 'path';
-// import the function to load initial data to DB
-import dbinit from './server/dbinit';
+
 
 const hostname = 'control-server';
 const port = 3030;
@@ -23,13 +21,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 // open static folder to the network to deliver files (pdf)
 app.use('/static', express.static(path.join(__dirname, 'static')));
-
-// test latex creation file
-// import LatexFile from './server/latex';
-// LatexFile.createTex('146502');
-
-// API route: UPLOAD initial data to PostgreSQL
-dbinit.uploadData();
 
 // load routes from /routes folder
 routes(app);
