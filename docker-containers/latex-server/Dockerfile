@@ -1,9 +1,7 @@
-# choose starting image @ node:latest
-FROM node
+# choose starting image @ fermiumlabs/latex-docker
+FROM fermiumlabs/latex-docker
 
 MAINTAINER Alin CHIS <alin.d.chis@gmail.com>
-
-WORKDIR /root/patj-manager/control-server
 
 # RUN apt-get update && apt-get install -y texlive
 

@@ -4,13 +4,11 @@ import bodyParser from 'body-parser';
 import path from 'path';
 
 // import routes
-var indexr = require('./server/routes/index');
-var tempor = require('./server/routes/tempo');
-var dbr = require('./server/routes/db');
+
 
 // server setup
 const hostname = 'control-server';
-const port = 3030;
+const port = 4040;
 const app = express()
 
 // log requests to the console
@@ -24,18 +22,12 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use('/static', express.static(path.join(__dirname, 'static')));
 
 // load routes from /routes folder
-app.use('/api', indexr);
-app.use('/tempo', tempor);
-app.use('/db', dbr);
 
 
 app.get('*', (req, res) => res.status(200).send({
   message: 'Welcome to the default route',
 }));
 
-// server.listen(port, hostname, () => {
-//   console.log(`Server running at http://${hostname}:${port}/`);
-// });
 
 // start server
-app.listen(3030, () => console.log('Control-Server App listening on port: ', port));
+app.listen(port, () => console.log('LaTeX-Server App listening on port: ', port));

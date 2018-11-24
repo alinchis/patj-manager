@@ -1,3 +1,4 @@
+// dbinit/index.js
 'use strict';
 
 // import libraries
@@ -13,33 +14,22 @@ import Localities from '../controllers/ro_siruta_locality';
 import POP_dom_SV_107Ds from '../controllers/pop_dom_sv_107d';
 
 /// create upload function
-function uploadTable(table, table_name) {
-	console.log('Starting DB upload: ' + table_name + ' ...');
-	fs.readFileSync('./server/dbinit/csv/' + table_name +'.csv')
-	.toString()
-	.split('\n')
-	.forEach(
-		function (line, index) {
-			if (line != '' && index > 0) {
-				const arr = line.split(';');
-				// console.log(arr);
-				table.add(arr);
-			}
-		}
-	);
+var uploadTable = function (req, res, next) {
+	// this.regions = fs.readFileSync('./server/dbinit/csv/siruta-regions.csv')
+	// 	.toString()
+	// 	.split('\n')
+	// 	.map( (line, index) => {
+	// 		// avoid empty lines and header
+	// 		if (line != '' && index > 0) {
+	// 			const arr = line.split(';');
+	// 			// console.log(arr);
+	// 			Regions.add(arr);
+	// 		}
+	// 	})
+	// 	.then( res => res.send('Upload complete'))
+	// 	.catch( err => res.send(err));
+	return res.send('test db2');
 };
 
 
-///////////////////////////////////////////////////////////////////////////////
-/// upload data to DB
-exports.uploadData = function () {
-	// upload Regions
-	// uploadTable(Regions, 'siruta-regions');
-	// upload Counties
-	// uploadTable(Counties, 'siruta-counties');
-	// upload Localities
-	// uploadTable(Localities, 'siruta-localities');
-	// upload Population
-	uploadTable(POP_dom_SV_107Ds, 'pop_dom_sv_107d')
-
-};
+module.exports = uploadTable;

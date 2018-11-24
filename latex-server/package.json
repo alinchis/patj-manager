@@ -1,7 +1,7 @@
 {
-  "name": "patj-control-server",
+  "name": "latex-server",
   "version": "0.0.1",
-  "description": "PATJ-Manager control server",
+  "description": "A Latex container for PATJ-Manager project.",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -12,7 +12,8 @@
     "manager",
     "node",
     "express",
-    "server"
+    "server",
+    "latex"
   ],
   "author": "Alin CHIS",
   "license": "ISC",
