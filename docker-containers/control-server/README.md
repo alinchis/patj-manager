@@ -1,2 +1,2 @@
 # docker-control-server
-ExpressJS container for Mjollnir-SWS
+ExpressJS container for PATJ-Manager.

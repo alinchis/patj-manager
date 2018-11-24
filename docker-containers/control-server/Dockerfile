@@ -3,12 +3,11 @@ FROM node
 
 MAINTAINER Alin CHIS <alin.d.chis@gmail.com>
 
-WORKDIR /root/patj-manager/control-server
 
 # RUN apt-get update && apt-get install -y texlive
 
 # add npm packages
-# RUN npm install --global --unsafe --silent \
+RUN npm install --global --unsafe --silent \
 #   body-parser \
 #   cookie-parser \
 #   debug \
@@ -16,14 +15,14 @@ WORKDIR /root/patj-manager/control-server
 #   morgan \
 #   pug \
 #   serve-favicon \
-#   pg \
-#   pg-hstore \
+  pg \
+  pg-hstore \
 #   babel-cli \
 #   node-latex \
 #   nodemon \
 #   fs \
-  # sequelize \
-  # sequelize-cli
+  sequelize \
+  sequelize-cli
 
 # more stuff...
 

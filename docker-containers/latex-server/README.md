@@ -1,2 +1,2 @@
-# docker-control-server
+# docker-latex-server
 Latex container for PATJ-Manager
