@@ -7,7 +7,7 @@ services:
     image: alinchis/control-server
     volumes:
       - "../control-server:/root/patj-manager/control-server"
-      - "../docker-data/control/data:/root/patj-manager/control-data"
+      - "../docker-data/control:/root/patj-manager/control-data"
     working_dir: /root/patj-manager/control-server
     command: bash -c "npm install && sequelize db:migrate && npm start"
     depends_on:
@@ -32,7 +32,7 @@ services:
     image: alinchis/latex-server
     volumes:
       - "../latex-server:/root/patj-manager/latex-server"
-      - "../docker-data/latex/data:/root/patj-manager/latex-data"
+      - "../docker-data/latex:/root/patj-manager/latex-data"
     working_dir: /root/patj-manager/latex-server
     command: bash -c "npm install && npm start"
     depends_on:

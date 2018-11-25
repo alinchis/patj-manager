@@ -1,11 +1,27 @@
-'use strict';
 
-import sequelize from 'sequelize';
+import fs from 'fs';
 import model from '../models';
 
 const { RO_SIRUTA_locality } = model;
+const csvFilePath = '../control-data/siruta/siruta-localities.csv';
+const csvDelimiter = ';';
+
 
 class RO_SIRUTA_localities {
+  // delete all data from table
+  static clear(req, res) {
+    return model.sequelize.query('TRUNCATE TABLE public."RO_SIRUTA_localities" RESTART IDENTITY')
+      .spread((results, metadata) => {
+        // Results will be an empty array and metadata will contain the number of affected rows.
+        res.status(200)
+          .json({
+            status: metadata,
+            data: results,
+            message: 'Table cleared',
+          });
+      });
+  }
+
   // CREATE::LOCAL a record on server
   static add(item) {
     const code_siruta = item[0];
@@ -26,63 +42,116 @@ class RO_SIRUTA_localities {
     const fictional = item[15];
 
     return RO_SIRUTA_locality
-    .findOrCreate({
-      where: {code_siruta: code_siruta},
-      defaults: {
-        name_ro,
-        name_en,
-        code_postal,
-        county_id,
-        code_siruta_sup,
-        code_type,
-        code_level,
-        code_med,
-        region_id,
-        code_fsj,
-        code_fs2,
-        code_fs3,
-        code_fsl,
-        rank,
-        fictional
-      }
-    })
-    .spread((record, created) => created)
-    .then((created) => console.log('@ADD Locality item: ', created))
-    .catch(err => console.log(err));
-  };
+      .findOrCreate({
+        where: { code_siruta: code_siruta },
+        defaults: {
+          name_ro,
+          name_en,
+          code_postal,
+          county_id,
+          code_siruta_sup,
+          code_type,
+          code_level,
+          code_med,
+          region_id,
+          code_fsj,
+          code_fs2,
+          code_fs3,
+          code_fsl,
+          rank,
+          fictional,
+        },
+      })
+      .spread((record, created) => created)
+      .then(created => created)
+      .catch(err => err);
+  }
+
+  // CREATE a bulk of items at once
+  static addBulk(items) {
+    return RO_SIRUTA_locality
+      .bulkCreate(items, { validate: true })
+      .then(() => RO_SIRUTA_locality.findAll({
+        attributes: [[model.sequelize.fn('COUNT', model.sequelize.col('*')), 'total']],
+      }))
+      .catch(err => err);
+  }
+
+  // READ Data from CSV file
+  static readCSV(csvPath, delimiter) {
+    return fs.readFileSync(csvPath)
+      .toString()
+      .split('\n')
+      .splice(1)
+      .map((line) => {
+        // avoid empty lines and header
+        if (line !== '') {
+          const record = line.split(delimiter);
+          // console.log('@line: ', record);
+          return {
+            code_siruta: record[0],
+            name_ro: record[1],
+            name_en: record[2],
+            code_postal: record[3],
+            county_id: record[4],
+            code_siruta_sup: record[5],
+            code_type: record[6],
+            code_level: record[7],
+            code_med: record[8],
+            region_id: record[9],
+            code_fsj: record[10],
+            code_fs2: record[11],
+            code_fs3: record[12],
+            code_fsl: record[13],
+            rank: record[14],
+            fictional: record[15],
+          };
+        }
+      })
+      .filter(line => line);
+  }
+
+  // UPLOAD data from CSV file
+  static uploadCSV(req, res) {
+    const arrSiruta = RO_SIRUTA_localities.readCSV(csvFilePath, csvDelimiter);
+    // console.log(arrSiruta);
+    RO_SIRUTA_localities.addBulk(arrSiruta)
+      .then(value => res.send(value))
+      .catch(err => err);
+  }
 
   // GET::CLIENT all records
   static list(req, res) {
     return RO_SIRUTA_locality
-    .findAll()
-    .then(records => res.status(200).send({
-      success: true,
-      message: 'Retrieved ' + records.length + ' records',
-      records
-    }))
-    .catch(err => res.status(200).send({
-      success: false,
-      message: err
-    }))
-  };
+      .findAll()
+      .then(records => res.status(200).send({
+        success: true,
+        message: `Retrieved ${records.length} records`,
+        records,
+      }))
+      .catch(err => res.status(200).send({
+        success: false,
+        message: err,
+      }));
+  }
 
   // GET::CLIENT all UAT from given County via county_id
   static UATlist(req, res) {
-    const { sirutaSup } = req.params
+    const { sirutaSup } = req.params;
     return RO_SIRUTA_locality
-    .findAll({
-      where: { code_siruta_sup: sirutaSup }
-    })
-    .then(records => res.status(200).send({
-      success: true,
-      message: 'Retrieved ' + records.length + ' records',
-      records
-    }))
-    .catch(err => res.status(200).send({
-      success: false,
-      message: err
-    }))
-  };
+      .findAll({
+        where: { code_siruta_sup: sirutaSup },
+      })
+      .then(records => res.status(200).send({
+        success: true,
+        message: `Retrieved ${records.length} records`,
+        records,
+      }))
+      .catch(err => res.status(200).send({
+        success: false,
+        message: err,
+      }));
+  }
 
   // GET::LOCAL UAT data for given code_siruta
   // static getLocalUAT(siruta) {
@@ -97,50 +166,50 @@ class RO_SIRUTA_localities {
   //     })
   // };
   static async getLocalUAT(req, res, siruta) {
-    const records = await RO_SIRUTA_locality
+    await RO_SIRUTA_locality
       .findAll({
         where: { code_siruta: siruta },
-        raw: true
+        raw: true,
       })
-      .then(records => {
-        console.log('Retrieved ' + records.length + ' records');
-        records
+      .then((records) => {
+        console.log(`Retrieved ${records.length} records`);
+        return records;
       })
-      .catch(err => console.log(err))
-  };
+      .catch(err => console.log(err));
+  }
 
   // GET::LOCAL UAT list of components for given code_siruta
   static async getLocalUATList(siruta) {
-    const records = await RO_SIRUTA_locality
+    await RO_SIRUTA_locality
       .findAll({
         where: { code_siruta_sup: siruta },
-        raw: true
+        raw: true,
       })
-      .then(records => {
-        console.log('Retrieved ' + records.length + ' records');
-        records
+      .then((records) => {
+        console.log(`Retrieved ${records.length} records`);
+        return records;
       })
-      .catch(err => console.log(err))
-  };
+      .catch(err => err);
+  }
 
 
   // GET::CLIENT all localities included in a UAT via code_siruta_sup = uat:code_siruta
   static localities(req, res) {
-    const { sirutaUAT } = req.params
+    const { sirutaUAT } = req.params;
     return RO_SIRUTA_locality
-    .findAll({
-      where: { code_siruta_sup: sirutaUAT }
-    })
-    .then(records => res.status(200).send({
-      success: true,
-      message: 'Retrieved ' + records.length + ' records',
-      records
-    }))
-    .catch(err => res.status(200).send({
-      success: false,
-      message: err
-    }))
-  };
-};
+      .findAll({
+        where: { code_siruta_sup: sirutaUAT },
+      })
+      .then(records => res.status(200).send({
+        success: true,
+        message: `Retrieved ${records.length} records`,
+        records,
+      }))
+      .catch(err => res.status(200).send({
+        success: false,
+        message: err,
+      }));
+  }
+}
 
-export default RO_SIRUTA_localities
+export default RO_SIRUTA_localities;

@@ -17,7 +17,7 @@ router.get('/', function (req, res) {
   res.send('DataBase home page');
 });
 // define the about route
-router.get('/regions/init', db);
+router.get('/init', db);
 
 
 module.exports = router;

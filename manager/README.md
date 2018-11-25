@@ -1,2 +1,2 @@
 # patj-manager
-A modular tool for managing and delivering PATJ data.
+Docker-compose to start the multi-container application for managing and delivering PATJ data.
