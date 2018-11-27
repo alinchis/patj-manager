@@ -1,0 +1,159 @@
+{
+    "language": "ro",
+    "arr": [
+        [
+            {
+                "label": "   0- 4 ani",
+                "nomItemId": 2,
+                "offset": 2,
+                "parentId": null
+            }
+        ],
+        [
+            {
+                "label": "Masculin ",
+                "nomItemId": 106,
+                "offset": 2,
+                "parentId": null
+            }
+        ],
+        [
+            {
+                "label": "Urban ",
+                "nomItemId": 109,
+                "offset": 2,
+                "parentId": null
+            }
+        ],
+        [
+            {
+                "label": "MACROREGIUNEA UNU",
+                "nomItemId": 21295,
+                "offset": 2,
+                "parentId": null
+            }
+        ],
+        [
+            {
+                "label": "Anul 2003",
+                "nomItemId": 4494,
+                "offset": 1,
+                "parentId": null
+            },
+            {
+                "label": "Anul 2004",
+                "nomItemId": 4513,
+                "offset": 2,
+                "parentId": null
+            },
+            {
+                "label": "Anul 2005",
+                "nomItemId": 4532,
+                "offset": 3,
+                "parentId": null
+            },
+            {
+                "label": "Anul 2006",
+                "nomItemId": 4551,
+                "offset": 4,
+                "parentId": null
+            },
+            {
+                "label": "Anul 2007",
+                "nomItemId": 4570,
+                "offset": 5,
+                "parentId": null
+            },
+            {
+                "label": "Anul 2008",
+                "nomItemId": 4589,
+                "offset": 6,
+                "parentId": null
+            },
+            {
+                "label": "Anul 2009",
+                "nomItemId": 4608,
+                "offset": 7,
+                "parentId": null
+            },
+            {
+                "label": "Anul 2010",
+                "nomItemId": 4627,
+                "offset": 8,
+                "parentId": null
+            },
+            {
+                "label": "Anul 2011",
+                "nomItemId": 4646,
+                "offset": 9,
+                "parentId": null
+            },
+            {
+                "label": "Anul 2012",
+                "nomItemId": 4665,
+                "offset": 10,
+                "parentId": null
+            },
+            {
+                "label": "Anul 2013",
+                "nomItemId": 4684,
+                "offset": 11,
+                "parentId": null
+            },
+            {
+                "label": "Anul 2014",
+                "nomItemId": 4703,
+                "offset": 12,
+                "parentId": null
+            },
+            {
+                "label": "Anul 2015",
+                "nomItemId": 4722,
+                "offset": 13,
+                "parentId": null
+            },
+            {
+                "label": "Anul 2016",
+                "nomItemId": 4741,
+                "offset": 14,
+                "parentId": null
+            },
+            {
+                "label": "Anul 2017",
+                "nomItemId": 4760,
+                "offset": 15,
+                "parentId": null
+            },
+            {
+                "label": "Anul 2018",
+                "nomItemId": 4779,
+                "offset": 16,
+                "parentId": null
+            }
+        ],
+        [
+            {
+                "label": "Numar persoane",
+                "nomItemId": 9685,
+                "offset": 1,
+                "parentId": null
+            }
+        ]
+    ],
+    "matrixName": "Populatia rezidenta la 1 ianuarie pe grupe de varsta si varste, sexe si medii de rezidenta, macroregiuni, regiuni de dezvoltare si judete",
+    "matrixDetails": {
+        "nomJud": 0,
+        "nomLoc": 0,
+        "matMaxDim": 6,
+        "matUMSpec": 0,
+        "matSiruta": 0,
+        "matCaen1": 0,
+        "matCaen2": 0,
+        "matRegJ": 4,
+        "matCharge": 0,
+        "matViews": 0,
+        "matDownloads": 0,
+        "matActive": 1,
+        "matTime": 5
+    }
+}

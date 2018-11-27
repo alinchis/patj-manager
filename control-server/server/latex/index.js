@@ -3,51 +3,69 @@
 import fs from 'fs';
 import readline from 'readline';
 import path from 'path';
-import sequelize from 'sequelize';
-import latex from 'node-latex';
+// import sequelize from 'sequelize';
 
 // import controllers
-import Regions from '../controllers/ro_siruta_region';
-import Counties from '../controllers/ro_siruta_county';
+// import Regions from '../controllers/ro_siruta_region';
+// import Counties from '../controllers/ro_siruta_county';
 import Localities from '../controllers/ro_siruta_locality';
-import Population from '../controllers/pop_dom_sv_107d';
+// import Population from '../controllers/pop_dom_sv_107d';
 
 
-// /////////////////////////////////////////////////////////////////////////////
-// // declare functions
+// ////////////////////////////////////////////////////////////////////////////
+// METHODS
 
-// create latex file for given UAT code_siruta
-async function createTex(code_siruta) {
+// CREATE Latex Table from array
+function createLatexTable(readArr) {
+	const writeArr = [];
+
+	return writeArr;
+}
+
+// EXTRACT: LaTeX placeholder array
+function createPlaceholderArr(list) {
+	return new Promise.all((resolve, reject) => {
+		const newList = [];
+		list.forEach((item, index) => {
+			if(item.includes('%db.')) {
+				const value = item.replace(/^%db./, '').replace(/%$/, '');
+				newList.push({ item: value, arrIndex: index });
+			}
+		});
+		if (!newList.length > 0) {
+			resolve(newList);
+		} else {
+			reject(Error('Returned list is empty!'));
+		}
+	});
+}
+
+// // CREATE: latex file for given UAT code_siruta
+async function createTexArr(code_siruta) {
 	// set some values
 	const readPath = path.join(__dirname, '/template.tex');
-	const writePath = path.join(__dirname, '/temp/', code_siruta, '.tex');
 	let readArr = [];
 	const writeArr = [];
+	let placeholderArr = [];
 	let arrFlag = true;
 	let i = 0;
 
-	// table metadata
-	const pop_dom_107d_meta = {
-		definitie: 'Populatia dupa domiciliu la data de 1 ianuarie a anului de referinta reprezinta numarul persoanelor cu cetatenie romana si domiciliu pe teritoriul Romaniei, delimitat dupa criterii administrativ-teritoriale. Domiciliul persoanei este adresa la care aceasta declara ca are locuinta principala, trecuta in actul de identitate (CI, BI), asa cum este luata in evidenta organelor administrative ale statului. In stabilirea valorii acestui indicator nu se tine cont de resedinta obisnuita, de perioada si\/sau motivul absentei de la domiciliu.',
-		periodicitate: 'Anuala',
-		metodologie: 'Metoda utilizata pentru calculul indicatorului "populatia dupa domiciliu" este metoda componentelor: a) la nivel de total tara, in functie de soldul sporului natural si soldul migratiei internationale definitive: P(t+1) = P(t) + N(t,t+1) - D(t,t+1) + dM(t,t+1) + Cv unde: P(t+1) - populatia cu domiciliul in tara la momentul t+1; P(t) - populatia cu domiciliul in tara la momentul t; N(t,t+1) - numarul de nascuti-vii in perioada (t , t+1), ai caror mame au avut domiciliul in Romania la data nasterii; D(t,t+1) - numarul de persoane care au decedat in perioada (t , t+1), care aveau domiciliul in Romania la data decesului; dM(t,t+1) - soldul migratiei internationale definitive (imigranti - emigranti), in perioada (t , t+1); Cv - coeficient de ajustare a varstelor. b) in profil teritorial, la diferite niveluri administrativ-teritoriale pentru care se calculeaza, in functie de soldul sporului natural, soldul migratiei internationale definitive si soldul migratiei interne cu schimbarea domiciliului: P(t+1) = P(t) + N(t,t+1) - D(t,t+1) + dM(t,t+1) + dm(t,t+1) + Cv unde: P(t+1) - populatia cu domiciliul in tara la momentul t+1; P(t) - populatia cu domiciliul in tara la momentul t; N(t,t+1) - numarul de nascuti-vii in perioada (t , t+1), ai caror mame au avut domiciliul in Romania la data nasterii; D(t,t+1) - numarul de persoane care au decedat in perioada (t , t+1), care aveau domiciliul in Romania la data decesului; dM(t,t+1) - soldul migratiei internationale definitive (imigranti - emigranti), in perioada (t , t+1); dm(t,t+1) - soldul migratiei interne cu schimbarea domiciliului (sositi - plecati), in perioada (t , t+1); Cv - coeficient de ajustare a varstelor. Varsta este exprimata in ani impliniti (de exemplu, o persoana avand varsta de 24 ani si 11 luni este considerata ca avand varsta de 24 ani). '
-	};
-
-	// get UAT info from DB for given code_siruta
+	// // GET: UAT data from DB
 	const uat = await Localities.getLocalUAT(code_siruta);
 	// get UAT list of components for given code_siruta
 	const locList = await Localities.getLocalUATList(code_siruta);
-	console.log('UAT list: ', locList);
+	// console.log('UAT list: ', locList);
 
-	// read file into array
+	// // CREATE: LaTeX Template array
 	readArr = fs.readFileSync(readPath)
 	.toString()
 	.split('\n');
 
-	// open write file
-	const output = fs.createWriteStream(writePath);
+	// // EXTRACT: LaTeX placeholher array
+	placeholderArr = await createPlaceholderArr(readArr);
 
-	// insert title
+
+	// // CREATE: LaTeX UAT array
 	while (arrFlag && i < readArr.length) {
 		if (readArr[i].includes('%db.title%')) {
 			const title = `\\title{Fişa UATB ${uat.name_ro}}`;
@@ -89,7 +107,7 @@ async function createTex(code_siruta) {
 			writeArr.push(readArr[i]);
 		}
 		i += 1;
-	};
+	}
 
 
 
@@ -101,14 +119,22 @@ async function createTex(code_siruta) {
 		i += 1;
 	}
 
-	// write writeArr to file
-	writeArr.forEach(line => output.write(`${line}\n`));
-	// close write file
-	output.end();
+	// return LaTeX UAT array
+	return writeArr;
 }
 
-// create pdf file for given UAT code_siruta
-async function createPdf(req, res) {
+// // CREATE Pdf file
+function createPdf(sirutaUAT) {
+	// create corresponding latex file
+	return createTexArr(sirutaUAT);
+}
+
+
+// ////////////////////////////////////////////////////////////////////////////
+// REQUESTS
+
+// request pdf file for given UAT code_siruta
+async function requestPdf(req, res) {
 	const { sirutaUAT } = req.params;
 	const latexPath = path.join(__dirname, '/temp/', sirutaUAT, '.tex');
 	const pdfPath = path.join('./static/', sirutaUAT, '.pdf');
@@ -116,7 +142,7 @@ async function createPdf(req, res) {
 	console.log('@Latex: create Pdf > ', sirutaUAT);
 
 	// create corresponding latex file
-	await createTex(sirutaUAT);
+	await createPdf(sirutaUAT);
 
 
 	const input = fs.createReadStream(latexPath);
@@ -141,10 +167,10 @@ async function createPdf(req, res) {
 	    pdfPath,
 		});
   });
-};
+}
 
 // delete pdf && latex file for given UAT code_siruta
-function deletePdf(req, res) {
+function removePdf(req, res) {
 	const { sirutaUAT } = req.params;
 	const pdfPath = path.join('./static/', sirutaUAT, '.pdf');
 	const latexPath = path.join(__dirname, '/temp/', sirutaUAT, '.tex');
@@ -165,7 +191,6 @@ function deletePdf(req, res) {
 	  if (err) throw err;
 	  console.log('@Latex: deleted Latex');
 	});
-
 }
 
 
@@ -173,7 +198,6 @@ function deletePdf(req, res) {
 // // export module
 
 module.exports = {
-	createTex,
-	createPdf,
-	deletePdf,
+	requestPdf,
+	removePdf,
 };

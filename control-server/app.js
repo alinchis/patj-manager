@@ -4,14 +4,14 @@ import bodyParser from 'body-parser';
 import path from 'path';
 
 // import routes
-var indexr = require('./server/routes/index');
-var tempor = require('./server/routes/tempo');
-var dbr = require('./server/routes/db');
+const indexr = require('./server/routes/index');
+const tempor = require('./server/routes/tempo');
+const dbr = require('./server/routes/db');
 
 // server setup
 const hostname = 'control-server';
 const port = 3030;
-const app = express()
+const app = express();
 
 // log requests to the console
 app.use(logger('dev'));

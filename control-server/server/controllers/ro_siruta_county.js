@@ -8,22 +8,12 @@ const csvDelimiter = ';';
 
 
 class RO_SIRUTA_counties {
-  // delete all data from table
-  static clear(req, res) {
-    return model.sequelize.query('TRUNCATE TABLE public."RO_SIRUTA_counties" RESTART IDENTITY')
-      .spread((results, metadata) => {
-      // Results will be an empty array and metadata will contain the number of affected rows.
-        res.status(200)
-          .json({
-            status: metadata,
-            data: results,
-            message: 'Table cleared',
-          });
-      });
-  }
+
+  // ////////////////////////////////////////////////////////////////////////////
+  // METHODS
 
   // CREATE a record on server
-  static add(item) {
+  static dbAdd(item) {
     const id = item[0];
     const name_ro = item[1];
     const name_en = item[2];
@@ -48,7 +38,7 @@ class RO_SIRUTA_counties {
   }
 
   // CREATE a bulk of items at once
-  static addBulk(items) {
+  static dbAddBulk(items) {
     return RO_SIRUTA_county
       .bulkCreate(items, { validate: true })
       .then(() => RO_SIRUTA_county.findAll({
@@ -58,7 +48,7 @@ class RO_SIRUTA_counties {
   }
 
   // READ Data from CSV file
-  static readCSV(csvPath, delimiter) {
+  static fsReadCSV(csvPath, delimiter) {
     return fs.readFileSync(csvPath)
       .toString()
       .split('\n')
@@ -81,11 +71,28 @@ class RO_SIRUTA_counties {
       .filter(line => line);
   }
 
+  // ////////////////////////////////////////////////////////////////////////////
+  // REQUESTS
+
+  // delete all data from table
+  static clear(req, res) {
+    return model.sequelize.query('TRUNCATE TABLE public."RO_SIRUTA_counties" RESTART IDENTITY')
+      .spread((results, metadata) => {
+      // Results will be an empty array and metadata will contain the number of affected rows.
+        res.status(200)
+          .json({
+            status: metadata,
+            data: results,
+            message: 'Table cleared',
+          });
+      });
+  }
+
   // UPLOAD data from CSV file
   static uploadCSV(req, res) {
-    const arrSiruta = RO_SIRUTA_counties.readCSV(csvFilePath, csvDelimiter);
+    const arrSiruta = RO_SIRUTA_counties.fsReadCSV(csvFilePath, csvDelimiter);
     // console.log(arrSiruta);
-    RO_SIRUTA_counties.addBulk(arrSiruta)
+    RO_SIRUTA_counties.dbAddBulk(arrSiruta)
       .then(value => res.send(value))
       .catch(err => err);
   }

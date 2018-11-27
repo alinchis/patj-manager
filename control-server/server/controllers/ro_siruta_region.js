@@ -8,22 +8,12 @@ const csvFilePath = '../control-data/siruta/siruta-regions.csv';
 const csvDelimiter = ';';
 
 class RO_SIRUTA_regions {
-  // delete all data from table
-  static clear(req, res) {
-    return model.sequelize.query('TRUNCATE TABLE public."RO_SIRUTA_regions" RESTART IDENTITY')
-      .spread((results, metadata) => {
-      // Results will be an empty array and metadata will contain the number of affected rows.
-        res.status(200)
-          .json({
-            status: metadata,
-            data: results,
-            message: 'Table cleared',
-          });
-      });
-  }
+
+  // ////////////////////////////////////////////////////////////////////////////
+  // METHODS
 
   // CREATE a record on server
-  static add(item) {
+  static dbAdd(item) {
     const id = item[0];
     const codeSiruta = item[1];
     const nameRo = item[2];
@@ -44,7 +34,7 @@ class RO_SIRUTA_regions {
   }
 
   // CREATE a bulk of items at once
-  static addBulk(items) {
+  static dbAddBulk(items) {
     return RO_SIRUTA_region
       .bulkCreate(items, { validate: true })
       .then(() => RO_SIRUTA_region.findAll({
@@ -54,7 +44,7 @@ class RO_SIRUTA_regions {
   }
 
   // READ Data from CSV file
-  static readCSV(csvPath, delimiter) {
+  static fsReadCSV(csvPath, delimiter) {
     return fs.readFileSync(csvPath)
       .toString()
       .split('\n')
@@ -75,11 +65,28 @@ class RO_SIRUTA_regions {
       .filter(line => line);
   }
 
+  // ////////////////////////////////////////////////////////////////////////////
+  // REQUESTS
+
+  // delete all data from table
+  static clear(req, res) {
+    return model.sequelize.query('TRUNCATE TABLE public."RO_SIRUTA_regions" RESTART IDENTITY')
+      .spread((results, metadata) => {
+      // Results will be an empty array and metadata will contain the number of affected rows.
+        res.status(200)
+          .json({
+            status: metadata,
+            data: results,
+            message: 'Table cleared',
+          });
+      });
+  }
+
   // UPLOAD data from CSV file
   static uploadCSV(req, res) {
-    const arrSiruta = RO_SIRUTA_regions.readCSV(csvFilePath, csvDelimiter);
+    const arrSiruta = RO_SIRUTA_regions.fsReadCSV(csvFilePath, csvDelimiter);
     // console.log(arrSiruta);
-    RO_SIRUTA_regions.addBulk(arrSiruta)
+    RO_SIRUTA_regions.dbAddBulk(arrSiruta)
       .then(value => res.send(value))
       .catch(err => err);
   }
