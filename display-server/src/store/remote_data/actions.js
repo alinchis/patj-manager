@@ -11,12 +11,12 @@ ACT_LOAD_UATS: function ({ commit, state }) {
     console.log('@store: county_siruta', county.code_siruta)
     // send request to control server
     Axios.get('/api/' + county.code_siruta + '/uat')
-    .then( (response) => { commit('MUT_LOAD_UATS', { list: response.data, index: index})})
+    .then( response => commit('MUT_LOAD_UATS', { list: response.data.records, index: index}))
     .catch(function (error) {
       if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
-        console.log('ERR data', error.response.data)
+        console.log('ERR data', error.response.records)
         console.log('ERR status', error.response.status)
         console.log('ERR header', error.response.headers)
       } else if (error.request) {
