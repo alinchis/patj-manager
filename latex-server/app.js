@@ -4,12 +4,12 @@ import bodyParser from 'body-parser';
 import path from 'path';
 
 // import routes
-
+const indexr = require('./server/routes/index');
 
 // server setup
-const hostname = 'control-server';
+// const hostname = 'control-server';
 const port = 4040;
-const app = express()
+const app = express();
 
 // log requests to the console
 app.use(logger('dev'));
@@ -22,10 +22,11 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use('/static', express.static(path.join(__dirname, 'static')));
 
 // load routes from /routes folder
+app.use('/api', indexr);
 
 
 app.get('*', (req, res) => res.status(200).send({
-  message: 'Welcome to the default route',
+  message: 'Welcome to the latex-server default route',
 }));
 
 

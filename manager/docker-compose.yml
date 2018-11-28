@@ -32,7 +32,6 @@ services:
     image: alinchis/latex-server
     volumes:
       - "../latex-server:/root/patj-manager/latex-server"
-      - "../docker-data/latex:/root/patj-manager/latex-data"
     working_dir: /root/patj-manager/latex-server
     command: bash -c "npm install && npm start"
     depends_on:

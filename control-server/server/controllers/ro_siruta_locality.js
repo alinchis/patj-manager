@@ -102,29 +102,21 @@ class RO_SIRUTA_localities {
   }
 
   // GET::LOCAL UAT list of included localities for given code_siruta
-  static async dbGetLocalUATList(siruta) {
-    await RO_SIRUTA_locality
+  static dbGetLocalUATList(siruta) {
+    return RO_SIRUTA_locality
       .findAll({
         where: { code_siruta_sup: siruta },
         raw: true,
-      })
-      .then((records) => {
-        // console.log(`Retrieved ${records.length} records`);
-        return records;
       })
       .catch(err => err);
   }
 
   // GET: UAT row
-  static async dbGetLocalUAT(siruta) {
-    await RO_SIRUTA_locality
+  static dbGetLocalUAT(siruta) {
+    return RO_SIRUTA_locality
       .findAll({
         where: { code_siruta: siruta },
         raw: true,
-      })
-      .then((records) => {
-        // console.log(`Retrieved ${records.length} records`);
-        return records;
       })
       .catch(err => console.log(err));
   }

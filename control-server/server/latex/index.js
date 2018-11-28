@@ -1,9 +1,10 @@
 
 // import libraries
 import fs from 'fs';
-import readline from 'readline';
+// import readline from 'readline';
 import path from 'path';
 // import sequelize from 'sequelize';
+import axios from 'axios';
 
 // import controllers
 // import Regions from '../controllers/ro_siruta_region';
@@ -11,19 +12,34 @@ import path from 'path';
 import Localities from '../controllers/ro_siruta_locality';
 // import Population from '../controllers/pop_dom_sv_107d';
 
+// create path to latex template file
+const latexPath = '../../../docker-data/control/latex/';
+
 
 // ////////////////////////////////////////////////////////////////////////////
 // METHODS
 
-// CREATE Latex Table from array
-function createLatexTable(readArr) {
-	const writeArr = [];
+// GET: UAT data from DB
+async function getUATData(siruta) {
+	// get UAT general data from siruta table
+	const [uat, locList] = await Promise.all([
+		Localities.dbGetLocalUAT(siruta),
+		Localities.dbGetLocalUATList(siruta),
+	]);
 
-	return writeArr;
+	return { info: uat[0], localities: locList[0] };
+}
+
+// READ: LaTeX template file into array
+function readTemplate() {
+	const templatePath = `${latexPath}template.tex`;
+	return fs.readFileSync(templatePath)
+		.toString()
+		.split('\n');
 }
 
 // EXTRACT: LaTeX placeholder array
-function createPlaceholderArr(list) {
+function createPhArr(list) {
 	return new Promise.all((resolve, reject) => {
 		const newList = [];
 		list.forEach((item, index) => {
@@ -40,93 +56,70 @@ function createPlaceholderArr(list) {
 	});
 }
 
-// // CREATE: latex file for given UAT code_siruta
-async function createTexArr(code_siruta) {
+// CREATE helper: LaTeX list
+function texList(arr) {
+	const outArr = [];
+
+	outArr.push('\\begin{enumerate}\n');
+	outArr.push('\\item testing\n');
+	arr.forEach((item) => {
+		const line = `\\item ${item.code_siruta} ${item.name_ro}\n`;
+		// console.log('!!!!!!!!!!!!!!',line);
+		outArr.push(line);
+	})
+	outArr.push('\\end{enumerate}\n');
+
+	return outArr;
+}
+
+// CREATE helper: LaTeX table
+
+
+
+// CREATE: LaTeX array
+async function createTexArr(uat, placeholders, template) {
 	// set some values
-	const readPath = path.join(__dirname, '/template.tex');
-	let readArr = [];
-	const writeArr = [];
-	let placeholderArr = [];
-	let arrFlag = true;
-	let i = 0;
+	const outArr = [];
 
-	// // GET: UAT data from DB
-	const uat = await Localities.getLocalUAT(code_siruta);
-	// get UAT list of components for given code_siruta
-	const locList = await Localities.getLocalUATList(code_siruta);
-	// console.log('UAT list: ', locList);
-
-	// // CREATE: LaTeX Template array
-	readArr = fs.readFileSync(readPath)
-	.toString()
-	.split('\n');
-
-	// // EXTRACT: LaTeX placeholher array
-	placeholderArr = await createPlaceholderArr(readArr);
-
-
-	// // CREATE: LaTeX UAT array
-	while (arrFlag && i < readArr.length) {
-		if (readArr[i].includes('%db.title%')) {
-			const title = `\\title{Fişa UATB ${uat.name_ro}}`;
-			writeArr.push(title);
-			writeArr.push('\\date{\\today}');
-			writeArr.push('\\maketitle');
-			arrFlag = false;
-		} else {
-			writeArr.push(readArr[i]);
-		}
-		i += 1;
-	}
+	// insert title
+	const titleArr = [
+		`\\title{Fişa UATB ${uat.info.name_ro}}\n`,
+		'\\date{\\today}\n',
+		'\\maketitle\n',
+	];
+	outArr.concat(template.slice(0, placeholders[0].index));
+	outArr.concat(titleArr);
 
 	// insert Section 1. Date de identificare
-	arrFlag = true;
-	while (arrFlag && i < readArr.length) {
-		if (readArr[i].includes('%db.section.info%')) {
-			const name_ro = `Denumire: ${uat.name_ro}\n`;
-			const locList = 'Localităţi componente: \n';
-			const code_siruta = `Cod SIRUTA: ${uat.code_siruta}\n`;
-			const rank = `Rang: ${uat.rank}\n`;
+	const listArr = texList(uat.localities);
+	const infoArr = [
+		`Denumire: ${uat.info.name_ro}\n`,
+		`Cod SIRUTA: ${uat.info.code_siruta}\n`,
+		`Rang: ${uat.info.rank}\n`,
+		'Localităţi componente: \n',
+	];
+	infoArr.concat(listArr);
 
-			writeArr.push(name_ro);
-			// insert UAT localities list
-			writeArr.push(locList);
-			writeArr.push('\\begin{enumerate}\n');
-			writeArr.push('\\item testing\n');
-			// for (let item in locList) {
-			// 	const line = '\\item ' + item.code_siruta + ' ' + item.name_ro + '\n';
-			// 	console.log('!!!!!!!!!!!!!!',line);
-			// 	writeArr.push(line);
-			// };
-			writeArr.push('\\end{enumerate}\n');
-			writeArr.push(code_siruta);
-			writeArr.push(rank);
-
-			arrFlag = false;
-		} else {
-			writeArr.push(readArr[i]);
-		}
-		i += 1;
-	}
-
-
+	outArr.concat(template.slice(placeholders[0].index, placeholders[1].index));
+	outArr.concat(infoArr);
 
 	// insert Section 2. Populatie la domiciliu
 
-	// copy remaining text
-	while (i < readArr.length) {
-		writeArr.push(readArr[i]);
-		i += 1;
-	}
+
+	// copy the rest of the template array
+	outArr.concot(template.slice(placeholders[1].index, template.length));
+
 
 	// return LaTeX UAT array
-	return writeArr;
+	return outArr;
 }
 
-// // CREATE Pdf file
-function createPdf(sirutaUAT) {
-	// create corresponding latex file
-	return createTexArr(sirutaUAT);
+// CREATE: LaTeX content string
+function createTexContent(texArr) {
+	let contentStr = '';
+	// convert array to string, also adding '\n' character after each line
+	texArr.forEach((item) => { contentStr += `${item}\n`; });
+	return contentStr;
 }
 
 
@@ -136,44 +129,55 @@ function createPdf(sirutaUAT) {
 // request pdf file for given UAT code_siruta
 async function requestPdf(req, res) {
 	const { sirutaUAT } = req.params;
-	const latexPath = path.join(__dirname, '/temp/', sirutaUAT, '.tex');
-	const pdfPath = path.join('./static/', sirutaUAT, '.pdf');
+	const inputPath = `http://latex-server:4040/static/${sirutaUAT}.pdf`;
+	const outputPath = `./static/${sirutaUAT}.pdf`;
 
 	console.log('@Latex: create Pdf > ', sirutaUAT);
 
-	// create corresponding latex file
-	await createPdf(sirutaUAT);
+	// get UAT data from DB
+	const uatData = await getUATData(sirutaUAT);
+	// console.log('@Latex 1: uatData > ', uatData);
 
+	// read LaTeX template file into array
+	const templateArray = readTemplate();
+	console.log('@Latex 2: template > ', templateArray);
 
-	const input = fs.createReadStream(latexPath);
-	console.log('@Latex: created input stream > ');
-	const output = fs.createWriteStream(pdfPath);
-	console.log('@Latex: created output stream > ');
-	const pdf = latex(input);
-	console.log('@Latex: bind > ');
+	// get the placeholders array
+	const phArray = createPhArr(templateArray);
+	console.log('@Latex 3: placeholder > ', phArray);
 
-	pdf.pipe(output);
-	pdf.on('error', (err) => {
-		console.error(err);
-		return res.status(201).send({
-	    message: 'Pdf file creation error!',
-	    pdfPath,
+	// create LaTeX array
+	const latexArray = createTexArr(uatData, phArray, templateArray);
+	console.log('@Latex 4: latex > ', latexArray);
+
+	// create LaTeX content
+	const texContent = await createTexContent(latexArray);
+	console.log('@Latex 5: content > ', texContent);
+
+	// create Pdf file from content
+	await axios.post('http://latex-server:4444/api/create', {
+		codeSiruta: sirutaUAT,
+		content: texContent,
+	})
+		.then(response => console.log(response.data))
+		.catch(err => console.log(err));
+
+	// copy Pdf file to control-server
+	fs.copyFile(inputPath, outputPath, (err) => {
+		if (err) throw err;
+		console.log('@Latex 6: Pdf file ready');
 	  });
-	});
-	pdf.on('end', () => {
-	  console.log('@Latex: Pdf file done!');
-		return res.status(201).send({
-	    message: `Pdf file for UAT with siruta ${sirutaUAT} has been created successfully `,
-	    pdfPath,
-		});
-  });
+	// const input = fs.createReadStream(inputPath);
+	// console.log('@Latex: created input stream > ');
+	// const output = fs.createWriteStream(outputPath);
+	// console.log('@Latex: created output stream > ');
+
 }
 
 // delete pdf && latex file for given UAT code_siruta
 function removePdf(req, res) {
 	const { sirutaUAT } = req.params;
 	const pdfPath = path.join('./static/', sirutaUAT, '.pdf');
-	const latexPath = path.join(__dirname, '/temp/', sirutaUAT, '.tex');
 
 	console.log('@Latex: delete Pdf > ', sirutaUAT);
 	// delete pdf file
@@ -185,17 +189,11 @@ function removePdf(req, res) {
 	    data: true,
 		});
 	});
-
-	// delete latex file
-	fs.unlink(latexPath, (err) => {
-	  if (err) throw err;
-	  console.log('@Latex: deleted Latex');
-	});
 }
 
 
 // /////////////////////////////////////////////////////////////////////////////
-// // export module
+// // EXPORT module
 
 module.exports = {
 	requestPdf,
