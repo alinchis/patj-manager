@@ -3,8 +3,6 @@
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
 \usepackage[T1]{fontenc}
-% add color to tables
-\usepackage[table]{xcolor}
 
 \usepackage{fancyhdr}
 \pagestyle{fancy}
@@ -14,16 +12,14 @@
 \renewcommand{\headrulewidth}{0.4pt}
 \renewcommand{\footrulewidth}{0.4pt}
 
-% increase space for table
-\renewcommand{\arraystretch}{1.5}
-
-% align 
-\usepackage[
-singlelinecheck=false % <-- important
-]{caption}
-
 
 \begin{document}
+\title{Fişa UATB MUNICIPIUL ALBA IULIA}
+
+\date{\today}
+
+\maketitle
+
 %db.title%
 
 %\thispagestyle{empty}
@@ -33,6 +29,30 @@ singlelinecheck=false % <-- important
 
 \begin{flushleft}
 
+Denumire: MUNICIPIUL ALBA IULIA
+
+Cod SIRUTA: 1017
+
+Rang: II
+
+Localităţi componente: 
+
+\begin{enumerate}
+
+\item testing
+
+\item 1026 ALBA IULIA
+
+\item 1035 BARABANŢ
+
+\item 1044 MICEŞTI
+
+\item 1053 OARDA
+
+\item 1062 PÎCLIŞA
+
+\end{enumerate}
+
 %db.section.info%
 
 \end{flushleft}
@@ -41,15 +61,7 @@ singlelinecheck=false % <-- important
 \section{Populaţia}
 
 %db.section.pop%
-\begin{table}[ht]
-\begin{tabular}{lll}
-\rowcolor{gray!40}
-col 1 & col 2 & col 3 \\ \hline
-1 & 2 & 3 \\
-4 & 5 & 6 \\ \hline
-\end{tabular}
-\caption{Populatia RO}
-\end{table}
+
 
 \section{Prognoze}
 

@@ -8,19 +8,18 @@ const latex = require('node-latex');
 // ////////////////////////////////////////////////////////////////////////////
 // METHODS
 
-function createPdf(content, savePath) {
-  const output = fs.createWriteStream(savePath);
-  const pdf = latex(content);
+async function createPdf(content, savePath) {
+  return new Promise((resolve, reject) => {
+    const output = fs.createWriteStream(savePath);
+    const pdf = latex(content);
 
-  pdf.pipe(output);
-  pdf.on('error', (err) => {
-    output.end();
-    return err;
-  });
-  pdf.on('finish', () => {
-    console.log('PDF generated!');
-    output.end();
-    return true;
+    pdf.pipe(output)
+      .on('error', () => {
+        console.log('@LaTeX-server 1: PDF error!');
+      });
+    
+    console.log('@LaTeX-server 1: PDF success!');
+    output.on('finish', resolve);
   });
 }
 
@@ -33,8 +32,9 @@ async function create(req, res) {
   const pdfPath = `./static/${codeSiruta}.pdf`;
 
   // create corresponding latex file
-  createPdf(content, pdfPath);
+  await createPdf(content, pdfPath);
   // return message
+  console.log('@LaTeX-server 2: PDF generated!');
   return res.status(201).send({
     message: `Pdf file for UAT with siruta ${codeSiruta} has been created `,
     data: true,
