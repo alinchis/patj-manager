@@ -245,12 +245,18 @@ function removePdf(req, res) {
 	console.log('@Control-server: removePdf > ', sirutaUAT);
 	// delete pdf file
 	fs.unlink(pdfPath, (err) => {
-	  if (err) throw err;
-	  console.log('@Control-server: Pdf removed');
-		return res.status(201).send({
-	    message: `Pdf file for UAT with siruta ${sirutaUAT} has been deleted`,
-	    data: true,
-		});
+		if (err) {
+			console.log(err);
+			return res.status(404).send({
+				message: 'Pdf file not found!',
+				data: false,
+			});
+		};
+	console.log('@Control-server: Pdf removed');
+	return res.status(201).send({
+		message: `Pdf file for UAT with siruta ${sirutaUAT} has been deleted`,
+		data: true,
+	});
 	});
 }
 
