@@ -1,0 +1,6 @@
+{
+    "resultTable": "<table class='tempoResults' width='100%'>\n<tr>\n<td class='yellowTitle' align='left' colspan='20'>Rezultatele cautarii - Populatia rezidenta la 1 ianuarie pe grupe de varsta si varste, sexe si medii de rezidenta, macroregiuni, regiuni de dezvoltare si judete</td>\n</tr>\n<tr>\n<th rowspan='4'>Rezultatul solicitat nu poate fi returnat. <br />Va rugam sa revizuiti criteriile de cautare<br />Daca problema persista va rugam sa ne contactati la webmaster@insse.ro specificand matricea pentru care ati primit acest mesaj</th>\n<table class='tempoResults' width='100%'>\n<tr>\n<td class='yellowTitle' align='left'>Rezultatele cautarii</td>\n</tr>\n<tr>\n<td align='left'>Cautarea dvs nu a returnat nici un rezultat. Va rugam sa revizuiti criteriile de cautare.<br /> Daca problema persista contactati-ne la <a href='mailto:webmaster@insse.ro' class='link'>webmaster@insse.ro</a>, specificand codul matricii. Va multumim!</td></tr></table>",
+    "showMap": false,
+    "regionalValues": null,
+    "encodedQuery": "2:106:109:21295:4494,4513,4532,4551,4570,4589,4608,4627,4646,4665,4684,4703,4722,4741,4760,4779:9685"
+}

@@ -94,7 +94,9 @@ async function downloadDB() {
 				return axios.get(requestPath)
 					.then((response) => {
 						// console.log(response.data);
-						return response.data;
+						const record = response.data;
+						record.tableName = item.code;
+						return record;
 					})
 					.catch(err => console.log(err));
 			}),
@@ -107,7 +109,7 @@ async function downloadDB() {
 	while(itemsList.length > 0) {
 		iter += 10;
 		const batchList = itemsList.splice(0, 10);
-		tempoL3.level3.push(await getL3(batchList)
+		tempoL3.level3 = tempoL3.level3.concat(await getL3(batchList)
 			.then((res) => {
 				console.log(`L3 download: ${iter}/1319`);
 				// fs.appendFileSync(tempoL3File, JSON.stringify(res), 'utf8');
