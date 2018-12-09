@@ -12,6 +12,9 @@ const fs = require('fs');
 // import http from 'http';
 const axios = require('axios');
 // const logger = require('../../node_modules/morgan/index');
+const cheerio = require('cheerio');
+// library to format time
+const dateFormat = require('dateformat');
 
 // paths
 const inputPath = '../../../docker-data/control/insse';
@@ -154,37 +157,97 @@ function buildPermutations(columns, limit) {
 
 
 // query function
-async function getData(arr, permList) {
-	// console.log('@getData::permList >>> ', permList);
-	// return Promise.all(
-	// 	permList.map(async (item) => {
-			const { tableName } = arr;
-			const reqPath = requestPath + tableName;
-			console.log('@getData::request path: ', reqPath);
-			const postBody = createPostBody(arr, permList);
-			// console.log('@getData:: postBody: ', postBody);
-			return axios.post(reqPath, postBody)
-				.catch(err => console.log(err.data))
-				.then((response) => {
-					console.log('@getData::response:');
-					console.log(response.data);
-					return response.data;
-				});
-	// 	}),
-	// );
+function getData(arr, permList) {
+	const { tableName } = arr;
+	const reqPath = requestPath + tableName;
+	// console.log('@getData::request path: ', reqPath);
+	const postBody = createPostBody(arr, permList);
+	// console.log('@getData:: postBody: ', postBody);
+	return axios.post(reqPath, postBody)
+		.catch(err => console.log(err.data))
+		.then((response) => {
+			// console.log('@getData::response:');
+			// console.log(response.data);
+			return response.data;
+		});
+}
+
+
+// transform html table to array
+function transformHtmlTable(inputArr) {
+	let returnArr = [];
+	const tableHeader = [];
+
+	// parse all query arrays
+	inputArr.forEach((item) => {
+		const tableArr = [];
+		const htmlTable = item.resultTable.replace(/\\n/g, '');
+		// console.log(htmlTable);
+		const $ = cheerio.load(htmlTable);
+		const test = $('.tempoResults').find('tr').length;
+		console.log('@transformHtmlTable:lenght >>> ', test);
+
+		// create header, if needed
+		if (tableHeader.length === 0) {
+			$('tr').eq(1)
+			.children()
+			.each((i, headerItem) => { tableHeader.push($(headerItem).text()); });
+		}
+	
+		// for each table row, except titles and info, parse data
+		$('tr')
+			// remove sub-header and footer rows
+			.filter((i, row) => $(row).children().length > 1)
+			// remove header rows
+			.slice(1)
+			.each((i, row) => {
+				// console.log('inside first loop: ', i);
+				const rowArr = [];
+				$(row)
+					.find('th')
+					.each((j, elem) => {
+						// console.log('inside second loop: ', j);
+						const rowItem = $(elem).text();
+						// console.log(rowItem);
+						// if (rowItem !== '-') {
+							rowArr.push(rowItem.trim());
+						// } else {
+						// 	// if text is missing, copy from previous row
+						// 	rowArr.push(returnArr[returnArr.length - 1][j]);
+						// }
+					});
+				// add data item
+				const rowData = $(row).find('td').text();
+				rowArr.push(rowData);
+
+				// push new row to array
+				// console.log(rowArr);
+				tableArr.push(rowArr);
+			});
+		
+		// add values to the table array
+		returnArr = returnArr.concat(tableArr);
+	});
+
+	// add header
+	returnArr.splice(0, 0, tableHeader);
+
+	// return new array
+	console.log('@transformHtmlTable::returnArr >>> ');
+	// console.log(returnArr);
+	return returnArr;
 }
 
 
 // download table from DB
-function downloadTable(item) {
-	const outputData = [];
+async function downloadTable(item) {
+	let outputData = [];
 
 	// create the columns table containing all columns with all options
 	const columns = item.dimensionsMap.map(column => column.options);
 	// console.log('@columns::cellscount: ', cellCount(columns));
 	// console.log('@columns::stepCount: ', stepCount(columns));
 	console.log('@downloadTable::Columns >>> ', columns.length);
-	const tableHeader = item.dimensionsMap.map(col => col.label);
 	const { tableName } = item;
 	console.log('@downloadTable::Table Name >>> ', tableName);
 
@@ -203,26 +266,26 @@ function downloadTable(item) {
 			queryArrays.push([...perm, [year], umColumn]);
 		});
 	});
-	console.log('@downloadTable::queryArrays');
+	// console.log('@downloadTable::queryArrays');
 	// console.log(queryArrays[0]);
 
-	// select a slice for testing purposes
-	const testPerm = [queryArrays[0]];
-	// testPerm.push(queryArrays.slice(0, 1));
-	// console.log('@TEST queryArrays >>> ', testPerm);
-
 	// request data
-	testPerm.map(async (permutation) => {
-		// const perm = permutation.map(cell => [cell]);
-		// console.log('@downloadTable::map: ', permutation);
-		const response = await getData(item, permutation);
-		console.log('@downloadTable::response: ', response.data);
+	const returnArray = await Promise.all(queryArrays.slice(0, 2).map(async permutation => getData(item, permutation)
+		.catch(err => console.log(err))));
 
-		return response.data;
-	});
+	// console.log('@downloadTable::returnArray.length >> ', returnArray.length);
+
+	// check if returned returnArray has values
+	let success = true;
+	if (returnArray.length === 0 || !returnArray) success = false;
+
+	// transform html table to regular array
+	outputData = transformHtmlTable(returnArray);
+	// console.log('testing');
+	// console.log(outputData);
 
 	// return table
-	return outputData;
+	return { outputData, success };
 }
 
 
@@ -234,40 +297,48 @@ function saveCSV(tableData, tableName) {
 	file.on('error', (err) => { console.log('@saveCSV::ERROR: writing CSV file >> ', err); });
 	tableData.forEach((row) => { file.write(`${row.join(';')}\n`); });
 	file.end();
-}
-
-
-// function check multiple MU in one table
-function checkMU(arr) {
-	const newArr = arr.map((item) => {
-		const columns = item.dimensionsMap.map(column => column.options);
-		const { tableName } = item;
-		if (columns[columns.length - 1].length > 1) return { tableName, columns, multipleMU: true };
-		return { tableName, columns, multipleMU: false };
-	})
-	return newArr;
+	console.log(`@saveCSV::Done - Table ${tableName}`);
 }
 
 
 // // download DataBase data from INSSE
 function downloadDB(fPath) {
+	// start timer
+	const dbStartTime = new Date();
+
 	// read table headers from file
 	const tempoL3 = readFile(fPath);
 
-	// check if there are multiple measure units in same table
-	// not important: all items are sent to the server
-	// const multipleMU = checkMU(tempoL3.level3);
-	// const checkArray = multipleMU.filter(item => item.multipleMU === true);
-	// console.log('@dowloadDB::multipleMU: ', checkArray);
-
 	// for each table header get table data
-	tempoL3.level3.slice(0, 1).forEach((element) => {
+	tempoL3.level3.slice(0, 1).forEach(async (element) => {
+		// start timer
+		const tableStartTime = new Date();
 		// download table drom DB
-		const tableData = downloadTable(element);
-		// const { tableName } = element;
-		// write table to CSV file
-		// saveCSV(tableData, tableName);
+		try {
+			const { tableData, success } = await downloadTable(element);
+			const { tableName } = element;
+
+			// check is table retrieval was successful and write it to file
+			if (success) {
+				console.log('@downloadDB::success');
+				// console.leg(tableData);
+				// write table to CSV file
+				saveCSV(tableData, tableName);
+			} else {
+				console.log(`@downloadDB::saveCSV - Table ${tableName} : UNSUCCESSFUL!!!`);
+			}
+		} catch (err) { console.log(err); }
+
+		// print execution time for table
+		const tableDuration = new Date() - tableStartTime;
+		console.info('Table execution time: %ds', Math.floor(tableDuration / 1000));
+		const passedTime = new Date() - dbStartTime;
+		console.info('Passed execution time: %ds', Math.floor(passedTime / 1000));
 	});
+
+	// end timer
+	const dbDuration = new Date() - dbStartTime;
+	console.info('DB execution time: %ds', Math.floor(dbDuration / 1000));
 }
 
 
