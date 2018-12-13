@@ -8,7 +8,7 @@ const fs = require('fs');
 // import path from 'path';
 // import sequelize from 'sequelize';
 // import http from 'http';
-const axios = require('../../node_modules/axios/index');
+const axios = require('axios');
 // const logger = require('../../node_modules/morgan/index');
 
 // /////////////////////////////////////////////////////////////////////////////

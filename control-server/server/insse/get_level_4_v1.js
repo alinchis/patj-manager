@@ -29,10 +29,11 @@ const requestPath = 'http://statistici.insse.ro:8077/tempo-ins/matrix/';
 const queryLimit = 30000;
 
 
-// /////////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////////////////////////
 // // METHODS
 
 
+// ////////////////////////////////////////////////////////////////////////////////////////////
 // load table headers from file [tempoL3.json]
 function readFile(filePath) {
   // console.log(`@read file: ${filePath}`);
@@ -44,18 +45,20 @@ function readFile(filePath) {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////////////////////////
 // for item in list and given array of columns, create POST body
-function createPostBody(item, arr) {
+function createPostBody(header, permutation) {
   const postBody = {};
   postBody.language = 'ro';
-  postBody.arr = arr;
-  postBody.matrixName = item.matrixName;
-  postBody.matrixDetails = item.details;
+  postBody.arr = permutation;
+  postBody.matrixName = header.matrixName;
+  postBody.matrixDetails = header.details;
 
   return postBody;
 }
 
 
+// ////////////////////////////////////////////////////////////////////////////////////////////
 // create array for culumn given
 function groupColumnItems(column, parentId, limit) {
   // create a work array
@@ -78,10 +81,14 @@ function groupColumnItems(column, parentId, limit) {
 
   if (dependency) {
     console.log('\x1b[36m%s\x1b[0m', '@group:: children branch');
-    // check and remove the first element if is 'Total'
-    if (workColumn[0].parentId === workColumn[0].nomItemId) workColumn.shift();
-    // set parentId as the parentId of the first element in array
-    newParentId = workColumn[0].parentId;
+    // save 'Total' column separately
+    let totalColumn = null;
+    if (workColumn[0].parentId === workColumn[0].nomItemId) totalColumn = workColumn.shift();
+    // there ara parents with no depending children, just total column (ex: G.1.1 GOS109A)
+    // set a group for total
+    returnArr.values.push([totalColumn]);
+    // set parentId as the parentId of the new first element in array
+    newParentId = workColumn[0].parentId || 'total';
     // create array of Children by grouping items with same parrent
     while (workColumn.length > 0) {
       const searchId = workColumn[0].parentId;
@@ -97,7 +104,7 @@ function groupColumnItems(column, parentId, limit) {
     console.log('\x1b[36m%s\x1b[0m', '@group:: parent branch');
     returnArr.type = 'parent';
     // remove 'total' cell
-    if (workColumn[0].label.toLowerCase().trim() === 'total') workColumn.shift();
+    // if (workColumn[0].label.toLowerCase().trim() === 'total') workColumn.shift();
     // return items
     returnArr.values = workColumn.map(item => [item]);
     // one item array does not influence the limit, return same limit
@@ -144,6 +151,7 @@ function groupColumnItems(column, parentId, limit) {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////////////////////////
 // build permutations
 function buildPermutations(columns, limit) {
   console.log('\x1b[34m%s\x1b[0m', '\n@buildPermutations >>>>>>>');
@@ -160,17 +168,29 @@ function buildPermutations(columns, limit) {
     // update parentId and Limit
     parentId = newColumns.newParentId;
     workLimit = newColumns.newLimit;
+
     // create permutation array
     if (index === 0) {
       console.log('\n@build:: first column branch');
       newPermutations.push(newColumns.returnArr.values);
     } else if (newColumns.returnArr.type === 'parent') {
       console.log('\n@build:: parent branch');
-      // console.log(permutations[permutations.length - 1]);
+      // get last permutation / children groups
+      const lastPermutation = permutations[permutations.length - 1];
+      const totalChild = permutations[permutations.length - 1][0];
+      // console.log(totalChild);
       newColumns.returnArr.values.forEach((parent) => {
         // console.log(parent[0].nomItemId);
-        const children = permutations[permutations.length - 1].filter(child => child[0].parentId === parent[0].nomItemId);
+        let children = lastPermutation.filter(child => child[0].parentId === parent[0].nomItemId);
+        // add total group for parents without children
+        if (children.length === 0) {
+          children.push(totalChild);
+        // add total group for parents with children
+        } else if (children[0][0].label.toLowerCase().trim() !== 'total') {
+          children = [totalChild.concat(children[0])];
+        }
         // console.log(children);
+        // push new permutation
         newPermutations.push([parent, ...children]);
       });
     } else {
@@ -192,6 +212,7 @@ function buildPermutations(columns, limit) {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////////////////////////
 // query function
 function getData(tablePrefix, tableName, progressIndex, arr, permList) {
   const reqPath = requestPath + tableName;
@@ -199,12 +220,13 @@ function getData(tablePrefix, tableName, progressIndex, arr, permList) {
 
   // console.log('@getData::request path: ', reqPath);
   const postBody = createPostBody(arr, permList);
-  // console.log('@getData:: postBody: ', postBody);
+  // console.log('@getData:: postBody: ', postBody.arr);
   return axios.post(reqPath, postBody)
     .catch(err => console.log(err.data));
 }
 
 
+// ////////////////////////////////////////////////////////////////////////////////////////////
 // test if response string returns data
 function testForData(tablePrefix, tableName, progressIndex, responseData) {
   const testString1 = 'Rezultatul solicitat nu poate fi returnat.';
@@ -254,6 +276,12 @@ function html2array(tablePrefix, tableName, progressIndex, inputArr) {
   const $ = cheerio.load(htmlTable);
   const len = $('td').length;
   console.log(`\n${tablePrefix} ${tableName}  @transformHtmlTable:lenght >>> ${len}`);
+
+  // if table has no data return now
+  if ($('tr').find('td').length === 2) {
+    console.log('\x1b[34m%s\x1b[0m', `\n${tablePrefix} ${tableName}  @transformHtmlTable >>>>>>> NO DATA`);
+    return { rows: tableArr, header: tableHeader };
+  }
 
   // create header
   $('tr').eq(1)
@@ -429,7 +457,7 @@ async function getTableData(tablePrefix, tableName, arr, permList) {
     // console.log(tempData.data);
 
     // check if response received contains data
-    if (typeof tempData !== 'undefined') {
+    if (tempData != null) {
       const goodData = testForData(tablePrefix, tableName, progressIndex, tempData.data);
       if (goodData) {
         returnArray.push(tempData.data.resultTable);
@@ -438,14 +466,17 @@ async function getTableData(tablePrefix, tableName, arr, permList) {
         // transform html to csv
         const tableData = html2array(tablePrefix, tableName, progressIndex, tempData.data);
 
-        // if necessary, save header to file
-        if (tableHeader.length === 0) {
-          tableHeader = tableData.header;
-          file.write(`${tableHeader.join(';')}\n`);
+        // test if html transform returns data
+        if (tableData.rows.length > 0) {
+          // if necessary, save header to file
+          if (tableHeader.length === 0) {
+            tableHeader = tableData.header;
+            file.write(`${tableHeader.join(';')}\n`);
+          }
+          // save data to file
+          tableData.rows.forEach((row) => { file.write(`${row.join(';')}\n`); });
         }
-        // save data to file
-        tableData.rows.forEach((row) => { file.write(`${row.join(';')}\n`); });
-        // response has no data branch
+      // response has no data branch
       } else {
         console.log('\x1b[31m%s\x1b[0m', `${tablePrefix} ${tableName} - ${progressIndex}  @getTableData::ERROR getData NO DATA >>`);
         console.log(tempData);
@@ -472,6 +503,8 @@ async function getTableData(tablePrefix, tableName, arr, permList) {
   return [tablePrefix, tableName, tableTimeStart, tableTimeEnd];
 }
 
+
+// ////////////////////////////////////////////////////////////////////////////////////////////
 
 // transform html table to array
 // function transformHtmlTable(inputArr, tableName) {
@@ -599,6 +632,8 @@ async function getTableData(tablePrefix, tableName, arr, permList) {
 //   console.log('\x1b[35m%s\x1b[0m', `\n${tableName}  @transformHtmlTable::saveCSV - DONE!`);
 // }
 
+
+// ////////////////////////////////////////////////////////////////////////////////////////////
 
 // download table from DB
 async function downloadTable(tablePrefix, tableName, item) {
@@ -730,11 +765,12 @@ function downloadDB(ancestorsFilePath, headersFilePath) {
   logFile.write(`${logFileHeader.join(';')}\n`);
 
   // // test individual table
-  // tempoL3.level3.filter(item => item.tableName === 'GOS109A').forEach(async (element) => {
+  tempoL3.level3.filter(item => item.tableName === 'GOS109A').forEach(async (element) => {
 
-  batchArray.forEach(async (batch) => {
-    // for each table header get table data
-    for (element of batch) {
+  // // for each batch loop
+  // batchArray.forEach(async (batch) => {
+  //   // for each table header get table data
+  //   for (element of batch) {
   
       // start timer
       const tableStartTime = new Date();
@@ -752,7 +788,7 @@ function downloadDB(ancestorsFilePath, headersFilePath) {
 
       // test if file exists
       if (fs.existsSync(filePath)) {
-        // continue;
+        console.log('\x1b[32m%s\x1b[0m', `\n${tablePrefix} ${tableName} @downloadDB:: file already exists, exiting ...`);
       } else {
         // download table from DB
         try {
@@ -769,7 +805,7 @@ function downloadDB(ancestorsFilePath, headersFilePath) {
   
         const passedTime = new Date() - dbStartTime;
         console.info('\x1b[33m%s\x1b[0m', `Elapsed execution time: ${Math.floor(passedTime / 1000)}s`);
-      };
+      // };
     // end for loop
     }
   // end batchArray forEach loop

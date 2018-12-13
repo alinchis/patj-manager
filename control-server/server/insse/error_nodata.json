@@ -1,0 +1,224 @@
+{
+    status: 200,
+    statusText: 'OK',
+    headers: { server: 'Apache-Coyote/1.1',
+     'transfer-encoding': 'chunked',
+     date: 'Thu,
+        13 Dec 2018 00: 02: 36 GMT',
+     connection: 'close'
+    },
+  config: { adapter: [Function: httpAdapter
+        ],
+     transformRequest: { '0': [Function: transformRequest
+            ]
+        },
+     transformResponse: { '0': [Function: transformResponse
+            ]
+        },
+     timeout: 0,
+     xsrfCookieName: 'XSRF-TOKEN',
+     xsrfHeaderName: 'X-XSRF-TOKEN',
+     maxContentLength: -1,
+     validateStatus: [Function: validateStatus
+        ],
+     headers: { Accept: 'application/json, text/plain, * /*',
+        'Content-Type': 'application/json;charset=utf-8',
+        'User-Agent': 'axios/0.18.0',
+        'Content-Length': 505 },
+     method: 'post',
+     url: 'http://statistici.insse.ro:8077/tempo-ins/matrix/GOS109A',
+     data:
+      '{"language":"ro","arr":[[{"label":"Mun. Bucuresti -incl. SAI","nomItemId":3103,"offset":43,"parentId":null}],[{"label":"Anul 1993","nomItemId":4304,"offset":1,"parentId":null}],[{"label":"Gigacalorii","nomItemId":9412,"offset":1,"parentId":null}]],"matrixName":"Energia termica distribuita pe judete si localitati","matrixDetails":{"nomJud":1,"nomLoc":2,"matMaxDim":4,"matUMSpec":0,"matSiruta":1,"matCaen1":0,"matCaen2":0,"matRegJ":0,"matCharge":0,"matViews":0,"matDownloads":0,"matActive":1,"matTime":3}}' },
+  request:
+   ClientRequest {
+     _events:
+      [Object: null prototype] {
+        socket: [Function],
+        abort: [Function],
+        aborted: [Function],
+        error: [Function],
+        timeout: [Function],
+        prefinish: [Function: requestOnPrefinish] },
+     _eventsCount: 6,
+     _maxListeners: undefined,
+     output: [],
+     outputEncodings: [],
+     outputCallbacks: [],
+     outputSize: 0,
+     writable: true,
+     _last: true,
+     chunkedEncoding: false,
+     shouldKeepAlive: false,
+     useChunkedEncodingByDefault: true,
+     sendDate: false,
+     _removedConnection: false,
+     _removedContLen: false,
+     _removedTE: false,
+     _contentLength: null,
+     _hasBody: true,
+     _trailer: '',
+     finished: true,
+     _headerSent: true,
+     socket:
+      Socket {
+        connecting: false,
+        _hadError: false,
+        _handle: [TCP],
+        _parent: null,
+        _host: 'statistici.insse.ro',
+        _readableState: [ReadableState],
+        readable: true,
+        _events: [Object],
+        _eventsCount: 7,
+        _maxListeners: undefined,
+        _writableState: [WritableState],
+        writable: false,
+        allowHalfOpen: false,
+        _sockname: null,
+        _pendingData: null,
+        _pendingEncoding: '',
+        server: null,
+        _server: null,
+        parser: null,
+        _httpMessage: [Circular],
+        [Symbol(asyncId)]: 58684,
+        [Symbol(lastWriteQueueSize)]: 0,
+        [Symbol(timeout)]: null,
+        [Symbol(kBytesRead)]: 0,
+        [Symbol(kBytesWritten)]: 0 },
+     connection:
+      Socket {
+        connecting: false,
+        _hadError: false,
+        _handle: [TCP],
+        _parent: null,
+        _host: 'statistici.insse.ro',
+        _readableState: [ReadableState],
+        readable: true,
+        _events: [Object],
+        _eventsCount: 7,
+        _maxListeners: undefined,
+        _writableState: [WritableState],
+        writable: false,
+        allowHalfOpen: false,
+        _sockname: null,
+        _pendingData: null,
+        _pendingEncoding: '',
+        server: null,
+        _server: null,
+        parser: null,
+        _httpMessage: [Circular],
+        [Symbol(asyncId)]: 58684,
+        [Symbol(lastWriteQueueSize)]: 0,
+        [Symbol(timeout)]: null,
+        [Symbol(kBytesRead)]: 0,
+        [Symbol(kBytesWritten)]: 0 },
+     _header:
+      'POST /tempo-ins/matrix/GOS109A HTTP/1.1\r\nAccept: application/json, text/plain, */*\r\nContent-Type: application/json;charset=utf-8\r\nUser-Agent: axios/0.18.0\r\nContent-Length: 505\r\nHost: statistici.insse.ro: 8077\r\nConnection: close\r\n\r\n',
+     _onPendingData: [Function: noopPendingOutput
+            ],
+     agent:
+      Agent {
+        _events: [Object
+                ],
+        _eventsCount: 1,
+        _maxListeners: undefined,
+        defaultPort: 80,
+        protocol: 'http:',
+        options: [Object
+                ],
+        requests: {},
+        sockets: [Object
+                ],
+        freeSockets: {},
+        keepAliveMsecs: 1000,
+        keepAlive: false,
+        maxSockets: Infinity,
+        maxFreeSockets: 256
+            },
+     socketPath: undefined,
+     timeout: undefined,
+     method: 'POST',
+     path: '/tempo-ins/matrix/GOS109A',
+     _ended: true,
+     res:
+      IncomingMessage {
+        _readableState: [ReadableState
+                ],
+        readable: false,
+        _events: [Object
+                ],
+        _eventsCount: 3,
+        _maxListeners: undefined,
+        socket: [Socket
+                ],
+        connection: [Socket
+                ],
+        httpVersionMajor: 1,
+        httpVersionMinor: 1,
+        httpVersion: '1.1',
+        complete: true,
+        headers: [Object
+                ],
+        rawHeaders: [Array
+                ],
+        trailers: {},
+        rawTrailers: [],
+        aborted: false,
+        upgrade: false,
+        url: '',
+        method: null,
+        statusCode: 200,
+        statusMessage: 'OK',
+        client: [Socket
+                ],
+        _consuming: true,
+        _dumped: false,
+        req: [Circular
+                ],
+        responseUrl: 'http: //statistici.insse.ro:8077/tempo-ins/matrix/GOS109A',
+        redirects: []
+            },
+     aborted: false,
+     timeoutCb: null,
+     upgradeOrConnect: false,
+     parser: null,
+     maxHeadersCount: null,
+     _redirectable:
+      Writable {
+        _writableState: [WritableState
+                ],
+        writable: true,
+        _events: [Object
+                ],
+        _eventsCount: 2,
+        _maxListeners: undefined,
+        _options: [Object
+                ],
+        _redirectCount: 0,
+        _redirects: [],
+        _requestBodyLength: 505,
+        _requestBodyBuffers: [],
+        _onNativeResponse: [Function
+                ],
+        _currentRequest: [Circular
+                ],
+        _currentUrl: 'http: //statistici.insse.ro:8077/tempo-ins/matrix/GOS109A' }, [Symbol(isCorked)
+                ]: false,
+                [Symbol(outHeadersKey)
+                ]: [Object: null prototype
+                ] {
+        accept: [Array
+                    ],
+        'content-type': [Array
+                    ],
+        'user-agent': [Array
+                    ],
+        'content-length': [Array
+                    ],
+        host: [Array
+                    ]
+                }
+            },
+  data: ''
+}
