@@ -18,7 +18,7 @@ const dateFormat = require('dateformat');
 
 // paths
 const inputPath = '../../../docker-data/control/insse';
-const jsonOutputPath = '../../../docker-data/control/insse/json';
+// const jsonOutputPath = '../../../docker-data/control/insse/json';
 const csvOutputPath = '../../../docker-data/control/insse/csv';
 const tempoL1File = `${inputPath}/tempoL1.json`;
 const tempoL3File = `${inputPath}/tempoL3.json`;
@@ -60,61 +60,68 @@ function createPostBody(header, permutation) {
 
 // ////////////////////////////////////////////////////////////////////////////////////////////
 // create array for culumn given
-function groupColumnItems(column, parentId, limit) {
+function groupColumnItems(column, parenthood, limit) {
   // create a work array
   let workColumn = column;
   let newLimit = 0;
-  let newParentId = parentId;
   // console.log('@group::workColumn: ', workColumn);
   console.log('\x1b[34m%s\x1b[0m', '\n@groupColumnItems >>>>>>>');
   console.log('@group::limit: ', limit);
-  console.log('@group::parentId: ', parentId);
+  console.log('@group::parenthood = ', parenthood);
   // initialize the return array
   const returnArr = {
     type: 'regular',
     values: [],
+    dependent: false,
   };
-  // check if current column has dependency / is Chlidren column
-  const dependency = workColumn[0].parentId !== null;
+  // check if current column has dependency
+  returnArr.dependent = workColumn[0].parentId !== null;
+  console.log('@group::dependent = ', returnArr.dependent);
   // check if current column is parent
-  const parenthood = workColumn.filter(item => item.nomItemId === parentId).length > 0;
+  console.log('parenthood = ', parenthood);
 
-  if (dependency) {
+  // if column has children items and items are not also parents
+  if (returnArr.dependent && !parenthood) {
     console.log('\x1b[36m%s\x1b[0m', '@group:: children branch');
     // save 'Total' column separately
-    let totalColumn = null;
-    if (workColumn[0].parentId === workColumn[0].nomItemId) totalColumn = workColumn.shift();
+    // let totalColumn = null;
+    // if (workColumn[0].parentId === workColumn[0].nomItemId) totalColumn = workColumn.shift();
     // there ara parents with no depending children, just total column (ex: G.1.1 GOS109A)
     // set a group for total
-    returnArr.values.push([totalColumn]);
-    // set parentId as the parentId of the new first element in array
-    newParentId = workColumn[0].parentId || 'total';
+    // returnArr.values.push([totalColumn]);
+
     // create array of Children by grouping items with same parrent
     while (workColumn.length > 0) {
       const searchId = workColumn[0].parentId;
-      returnArr.type = 'child';
+      returnArr.type = 'children';
       returnArr.values.push(workColumn.filter(item => item.parentId === searchId));
+      returnArr.dependent = true;
       workColumn = workColumn.filter(item => item.parentId !== searchId);
     }
 
+    // calculate new limit dividing the current limit to the largest group of items in array
     const lenghtsArr = returnArr.values.map(item => item.length);
     newLimit = Math.floor(limit / Math.max(...lenghtsArr));
 
+  // if column has parent items
   } else if (parenthood) {
     console.log('\x1b[36m%s\x1b[0m', '@group:: parent branch');
-    returnArr.type = 'parent';
+    returnArr.type = 'parents';
     // remove 'total' cell
     // if (workColumn[0].label.toLowerCase().trim() === 'total') workColumn.shift();
     // return items
     returnArr.values = workColumn.map(item => [item]);
     // one item array does not influence the limit, return same limit
     newLimit = limit;
-    // reset parentId value
-    newParentId = null;
+
+  // if column has regular items
+  // // if query limit has been reached, group elements in one items arrays
   } else if (limit === 0) {
     console.log('\x1b[36m%s\x1b[0m', '@group:: limit === 0 branch');
     returnArr.values = workColumn.map(item => [item]);
     // console.log(returnArr.values);
+
+  // // if query limit is not reached, make one array with all items
   } else if (limit > column.length) {
     console.log('\x1b[36m%s\x1b[0m', '@group:: limit > column.lenght branch');
     // a column selection can hold max 500 items
@@ -127,6 +134,8 @@ function groupColumnItems(column, parentId, limit) {
       returnArr.values = [workColumn];
       newLimit = Math.floor(limit / column.length);
     }
+
+  // // if query limit is not reached, but is smaller than the amount of items
   } else if (limit < column.length) {
     console.log('\x1b[36m%s\x1b[0m', '@group:: limit < column.length branch');
     // a column selection can hold max 500 items
@@ -147,7 +156,7 @@ function groupColumnItems(column, parentId, limit) {
   // console.log(returnArr.values);
 
   // return the array with grouped values
-  return { returnArr, newParentId, newLimit };
+  return { returnArr, newLimit };
 }
 
 
@@ -158,57 +167,127 @@ function buildPermutations(columns, limit) {
 
   let workLimit = limit;
   let permutations = [];
-  let parentId = null;
+  const typeArray = [];
+  let parenthood = false;
+  let tableType = 'regular';
 
   // iterate over array of columns and build the permutations
   columns.reverse().forEach((column, index) => {
     // for each column return items grouped
-    const newColumns = groupColumnItems(column, parentId, workLimit);
+    const groupedColumn = groupColumnItems(column, parenthood, workLimit);
+    console.log(`@build:: column: ${index}   >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>`);
+    // console.log(groupedColumn.returnArr.values);
+
+    // create work array
     const newPermutations = [];
-    // update parentId and Limit
-    parentId = newColumns.newParentId;
-    workLimit = newColumns.newLimit;
+    // update type Array
+    typeArray.push(groupedColumn.returnArr.type);
+    // update Limit
+    workLimit = groupedColumn.newLimit;
+    // update parenthood for next column
+    // // if current items are children set parenthood to true
+    if (groupedColumn.returnArr.type === 'children') {
+      parenthood = true;
+    // // if current items are parents of parents
+    } else if (groupedColumn.returnArr.type === 'parents' && groupedColumn.returnArr.dependent) {
+      parenthood = true;
+    // // if current items have no dependency
+    } else {
+      parenthood = false;
+    }
 
     // create permutation array
+    // if first column, add directly (I presuppose: the first column has fewer elements than limit: 30000)
     if (index === 0) {
       console.log('\n@build:: first column branch');
-      newPermutations.push(newColumns.returnArr.values);
-    } else if (newColumns.returnArr.type === 'parent') {
-      console.log('\n@build:: parent branch');
-      // get last permutation / children groups
-      const lastPermutation = permutations[permutations.length - 1];
-      const totalChild = permutations[permutations.length - 1][0];
-      // console.log(totalChild);
-      newColumns.returnArr.values.forEach((parent) => {
-        // console.log(parent[0].nomItemId);
-        let children = lastPermutation.filter(child => child[0].parentId === parent[0].nomItemId);
-        // add total group for parents without children
-        if (children.length === 0) {
-          children.push(totalChild);
-        // add total group for parents with children
-        } else if (children[0][0].label.toLowerCase().trim() !== 'total') {
-          children = [totalChild.concat(children[0])];
-        }
-        // console.log(children);
-        // push new permutation
-        newPermutations.push([parent, ...children]);
+      newPermutations.push(groupedColumn.returnArr.values);
+
+      // column contains parents
+    } else if (groupedColumn.returnArr.type === 'parents') {
+      console.log('\n@build:: parents branch');
+
+      // console.log(lastPermutation);
+      // get total column permutation
+      const totalPermutation = permutations.filter((child) => {
+        return child[0][0].label.trim().toLowerCase() === 'total';
       });
+      // console.log(totalPermutation);
+
+      // if last column were parents
+      if (typeArray[typeArray.length - 2] === 'parents') {
+        console.log('\n@build:: parents branch <<<<< parents');
+        // for each parent
+        groupedColumn.returnArr.values.forEach((parent) => {
+          // find all children
+          const children = permutations.filter((child) => {
+            // console.log(child);
+            return child[0][0].parentId === parent[0].nomItemId;
+          });
+          // console.log('\n@build:: parents branch <<<<< parents.length = ', children.length);
+
+          // if parent has children, pair parent with each child
+          if (children.length > 0) {
+            children.forEach((child) => { newPermutations.push([parent, ...child]); });
+          }
+          // console.log(newPermutations[1]);
+
+          // also pair parent with total permutation
+          newPermutations.push([parent, ...totalPermutation]);
+        });
+
+      // if last column were children
+      } else if (typeArray[typeArray.length - 2] === 'children') {
+        console.log('\n@build:: parents branch <<<<< children');
+        // for each parent
+        groupedColumn.returnArr.values.forEach((parent) => {
+          // find all children
+          const children = permutations.filter(child => child[0][0].parentId === parent[0].nomItemId);
+          // console.log('\n@build:: parents branch <<<<< children.length = ', children.length);
+          // console.log(children);
+
+          // if parent has children, pair parent with children
+          if (children.length > 0) {
+            newPermutations.push([parent, ...children[0]]);
+          }
+
+          // also pair parent with total permutation
+          newPermutations.push([parent, ...totalPermutation[0]]);
+        });
+      }
+
+    // column contains children
+    } else if (groupedColumn.returnArr.type === 'children') {
+      console.log('\n@build:: children branch');
+      groupedColumn.returnArr.values.forEach((item) => {
+        permutations.forEach((elem) => {
+          newPermutations.push([item, ...elem]);
+        });
+      });
+
+    // column contains regular items
     } else {
-      console.log('\n@build:: else branch');
-      // console.log(newColumns.returnArr.values);
-      newColumns.returnArr.values.forEach((item) => {
+      console.log('\n@build:: regular branch');
+      // console.log(groupedColumn.returnArr.values);
+      groupedColumn.returnArr.values.forEach((item) => {
         permutations.forEach((elem) => {
           newPermutations.push([item, ...elem]);
         });
       });
     }
+
+    // save new Permutations to stable permutations
     permutations = newPermutations;
-    console.log(`@build ${index}::permutations >>>`);
-    // console.log(permutations[0]);
+    console.log(`@build ${index}::permutations >>> DONE`);
+    // console.log(permutations[1]);
   });
 
+  // determine table type
+  const numOfParents = typeArray.filter(item => item === 'parent').length;
+  if (numOfParents === 1) tableType = 'one-parent';
+  if (numOfParents > 1) tableType = 'multiple-parents';
+
   // return permutations array
-  return permutations;
+  return { permutations, tableType };
 }
 
 
@@ -234,7 +313,7 @@ function testForData(tablePrefix, tableName, progressIndex, responseData) {
 
   let test = true;
 
-  if (responseData.resultTable !== undefined) {
+  if (responseData.resultTable != null) {
     // parse html string and remove '\n' substring
     const htmlTable = responseData.resultTable.replace(/\\n/g, '');
     const $ = cheerio.load(htmlTable);
@@ -260,98 +339,54 @@ function testForData(tablePrefix, tableName, progressIndex, responseData) {
 // /////////////////////////////////////////////////////////////////////////////////////////////
 // transform html table to array
 
-function html2array(tablePrefix, tableName, progressIndex, inputArr) {
-  console.log('\x1b[34m%s\x1b[0m', `\n${tablePrefix} ${tableName}  @transformHtmlTable >>>>>>>`);
+function html2array(tablePrefix, tableName, tableType, progressIndex, inputArr) {
+  console.log('\x1b[34m%s\x1b[0m', `\n${tablePrefix} ${tableName} - ${progressIndex}  @transformHtmlTable >>>>>>> START`);
 
-  // let returnArr = [];
+  // create return variables
   const tableHeader = [];
-  let smallHeader = false;
-
-  // parse html data
-  // inputArr.forEach((item) => {
   const tableArr = [];
 
+  // remove unnecessary '\n' characters
   const htmlTable = inputArr.resultTable.replace(/\\n/g, '');
-  // console.log(htmlTable);
+
+  // process html table
   const $ = cheerio.load(htmlTable);
   const len = $('td').length;
-  console.log(`\n${tablePrefix} ${tableName}  @transformHtmlTable:lenght >>> ${len}`);
+  console.log(`\n${tablePrefix} ${tableName} - ${progressIndex}  @transformHtmlTable:lenght >>> ${len}`);
 
-  // if table has no data return now
+  // if table received has no data
   if ($('tr').find('td').length === 2) {
-    console.log('\x1b[34m%s\x1b[0m', `\n${tablePrefix} ${tableName}  @transformHtmlTable >>>>>>> NO DATA`);
+    console.log('\x1b[34m%s\x1b[0m', `\n${tablePrefix} ${tableName} - ${progressIndex}  @transformHtmlTable >>>>>>> NO DATA`);
+    // return empty array and empty header
     return { rows: tableArr, header: tableHeader };
   }
 
-  // create header
-  $('tr').eq(1)
-    .children()
-    .each((i, headerItem) => { tableHeader.push($(headerItem).text()); });
-  // console.log(tableHeader);
+  // if table type is regular
+  if (tableType === 'regular') {
+    // create header
+    $('tr').eq(1)
+      .children()
+      .each((i, headerItem) => { tableHeader.push($(headerItem).text()); });
+    // console.log(tableHeader);
 
-  // test if there are only two columns (UM + years)
-  if ($('tr')
-    .filter((i, row) => $(row)
-      .children().length === 1).length < 4) {
-    // raise small header flag / table with two columns UM + Year
-    smallHeader = true;
-    // reverse header ([UM, Ani] => [Ani, UM])
-    tableHeader.reverse();
-  } else {
+    // get UM column
     const umColumn = $('tr')
       .filter((i, row) => $(row)
         .children().length === 1)
       .slice(1)
       .eq(1);
     tableHeader.push($(umColumn).text().trim());
-  }
 
-  // add quality header
-  tableHeader.push('Calitatea datelor');
+    // add quality header
+    tableHeader.push('Calitatea datelor');
 
-  // get year column
-  const yearColumn = $('tr')
-    .filter((i, row) => $(row)
-      .children().length === 1)
-    .slice(1)
-    .eq(0);
+    // get year column
+    const yearColumn = $('tr')
+      .filter((i, row) => $(row)
+        .children().length === 1)
+      .slice(1)
+      .eq(0);
 
-  // if we have a two column table
-  if (smallHeader) {
-    const rowArr = [];
-
-    // add year item
-    const yearValue = $(yearColumn).text().trim().split(' ');
-    rowArr.push(yearValue[1]);
-
-    // add data item
-    const rowData = $('tr')
-      .filter((i, row) => $(row).children().length > 1)
-      .find('td');
-    rowArr.push($(rowData).text());
-
-    // add data quality item
-    let dataQlty = 'definitive';
-    if ($(rowData).has('u').length > 0) {
-      // underline data stands for 'provizorii'
-      dataQlty = 'provizorii';
-    } else if ($(rowData).has('strong').length > 0) {
-      // bold & underline data stands for 'semidefinitive'
-      if ($(rowData).has('strong').has('u').length > 0) {
-        dataQlty = 'semidefinitive';
-      } else {
-        // bold data stands for 'revizuite'
-        dataQlty = 'revizuite';
-      }
-    }
-    rowArr.push(dataQlty);
-
-    // push new row to array
-    // console.log(rowArr);
-    tableArr.push(rowArr);
-
-  // normal tables branch
-  } else {
     // for each table row, except titles and info, parse data
     $('tr')
     // remove sub-header and footer rows
@@ -403,33 +438,101 @@ function html2array(tablePrefix, tableName, progressIndex, inputArr) {
         // console.log(rowArr);
         tableArr.push(rowArr);
       });
+
+    // return new array
+    console.log(`\n${tablePrefix} ${tableName} - ${progressIndex}  @transformHtmlTable: ${tableType} transform finished!`);
+    // console.log(returnArr);
+
+    // return data
+    return { rows: tableArr, header: tableHeader };
   }
 
-    // add values to the table array
-    // returnArr = returnArr.concat(tableArr);
-  // });
+  // if table has only two columns (UM + years)
+  if (tableType === 'two-columns') {
+    // create header
+    $('tr').eq(1)
+      .children()
+      .each((i, headerItem) => { tableHeader.push($(headerItem).text()); });
+    // console.log(tableHeader);
 
-  // add header
-  // returnArr.splice(0, 0, tableHeader);
+    // reverse header ([UM, Ani] => [Ani, UM])
+    tableHeader.reverse();
 
-  // return new array
-  console.log(`\n${tablePrefix} ${tableName} - ${progressIndex}  @transformHtmlTable: transform finished!`);
-  // console.log(returnArr);
+    // add quality header
+    tableHeader.push('Calitatea datelor');
 
-  // return data
+    // get year column
+    const yearColumn = $('tr')
+      .filter((i, row) => $(row)
+        .children().length === 1)
+      .slice(1)
+      .eq(0);
+
+    const rowArr = [];
+
+    // add year item
+    const yearValue = $(yearColumn).text().trim().split(' ');
+    rowArr.push(yearValue[1]);
+
+    // add data item
+    const rowData = $('tr')
+      .filter((i, row) => $(row).children().length > 1)
+      .find('td');
+    rowArr.push($(rowData).text());
+
+    // add data quality item
+    let dataQlty = 'definitive';
+    if ($(rowData).has('u').length > 0) {
+      // underline data stands for 'provizorii'
+      dataQlty = 'provizorii';
+    } else if ($(rowData).has('strong').length > 0) {
+      // bold & underline data stands for 'semidefinitive'
+      if ($(rowData).has('strong').has('u').length > 0) {
+        dataQlty = 'semidefinitive';
+      } else {
+        // bold data stands for 'revizuite'
+        dataQlty = 'revizuite';
+      }
+    }
+    rowArr.push(dataQlty);
+
+    // push new row to array
+    // console.log(rowArr);
+    tableArr.push(rowArr);
+
+    // return new array
+    console.log(`\n${tablePrefix} ${tableName} - ${progressIndex}  @transformHtmlTable: ${tableType} transform finished!`);
+    // console.log(returnArr);
+
+    // return data
+    return { rows: tableArr, header: tableHeader };
+  }
+
+  // if table has multiple parents
+  if (tableType === 'multiple-parents') {
+  
+    // return new array
+    console.log(`\n${tablePrefix} ${tableName} - ${progressIndex}  @transformHtmlTable: ${tableType} transform finished!`);
+    // console.log(returnArr);
+
+    // return data
+    return { rows: tableArr, header: tableHeader };
+  }
+
+  // if none of the above options work, send empty array and header
   return { rows: tableArr, header: tableHeader };
 }
 
 
 // ////////////////////////////////////////////////////////////////////////////////////////////
 // download table for query array
-async function getTableData(tablePrefix, tableName, arr, permList) {
+async function getTableData(tablePrefix, tableName, tableType, arr, permList, errorFile) {
   console.log('\x1b[34m%s\x1b[0m', '\n@getTableData >>>>>>>');
 
   // open write file for current table
   const startTime = new Date();
   const currentDate = dateFormat(startTime, 'isoDate');
-  console.log('\x1b[35m%s\x1b[0m', `${tablePrefix} ${tableName}  @saveCSV:: create CSV file >>`);
+  console.log('\x1b[35m%s\x1b[0m', `${tablePrefix} ${tableName}  @saveCSV:: write CSV file >>`);
   const file = fs.createWriteStream(`${csvOutputPath}/${currentDate}_${tablePrefix}_${tableName}.csv`);
   file.on('error', (err) => {
     console.log('\x1b[31m%s\x1b[0m', `${tablePrefix} ${tableName}  @saveCSV::ERROR creating CSV file >>`);
@@ -464,7 +567,7 @@ async function getTableData(tablePrefix, tableName, arr, permList) {
         i += 1;
 
         // transform html to csv
-        const tableData = html2array(tablePrefix, tableName, progressIndex, tempData.data);
+        const tableData = html2array(tablePrefix, tableName, tableType, progressIndex, tempData.data);
 
         // test if html transform returns data
         if (tableData.rows.length > 0) {
@@ -479,14 +582,20 @@ async function getTableData(tablePrefix, tableName, arr, permList) {
       // response has no data branch
       } else {
         console.log('\x1b[31m%s\x1b[0m', `${tablePrefix} ${tableName} - ${progressIndex}  @getTableData::ERROR getData NO DATA >>`);
-        console.log(tempData);
+        // console.log(tempData);
         retry = true;
+
+        // save error to log
+        errorFile.write(`${tablePrefix};${tableName};${progressIndex};getTableData;NO DATA\n`);
       }
     // response is undefined
     } else {
       console.log('\x1b[31m%s\x1b[0m', `${tablePrefix} ${tableName} - ${progressIndex}  @getTableData::ERROR getData sends "undefined" >>`);
-      console.log(tempData);
+      // console.log(tempData);
       retry = true;
+
+      // save error to log
+      errorFile.write(`${tablePrefix};${tableName};${progressIndex};getTableData;undefined\n`);
     }
   }
 
@@ -505,144 +614,14 @@ async function getTableData(tablePrefix, tableName, arr, permList) {
 
 
 // ////////////////////////////////////////////////////////////////////////////////////////////
-
-// transform html table to array
-// function transformHtmlTable(inputArr, tableName) {
-//   console.log('\x1b[34m%s\x1b[0m', `\n${tableName}  @transformHtmlTable >>>>>>>`);
-
-//   // open file for write
-//   console.log('\x1b[35m%s\x1b[0m', `\n${tableName}  @transformHtmlTable::saveCSV create file`);
-//   // get current date
-//   const now = new Date();
-//   const currentDate = dateFormat(now, 'isoDate');
-//   // open write stream
-//   const file = fs.createWriteStream(`${jsonOutputPath}/${currentDate}_${tableName}.csv`);
-//   file.on('error', (err) => {
-// 		console.log(`\n${tableName}  @saveCSV::ERROR: writing CSV file >> `);
-// 		console.log(err);
-// 	});
-
-//   // let returnArr = [];
-//   const tableHeader = [];
-
-//   // parse all query arrays
-//   inputArr.forEach((item) => {
-//     const tableArr = [];
-//     const htmlTable = item.resultTable.replace(/\\n/g, '');
-//     // console.log(htmlTable);
-//     const $ = cheerio.load(htmlTable);
-//     const len = $('.tempoResults').find('tr').length;
-//     console.log(`\n${tableName}  @transformHtmlTable:lenght >>> ${len}`);
-
-//     // create header, if needed
-//     if (tableHeader.length === 0) {
-//       $('tr').eq(1)
-//         .children()
-//         .each((i, headerItem) => { tableHeader.push($(headerItem).text()); });
-//       const umColumn = $('tr')
-//         .filter((i, row) => $(row)
-//           .children().length === 1)
-//         .slice(1)
-//         .eq(1);
-//       tableHeader.push($(umColumn).text().trim());
-
-//       // add quality header
-// 			tableHeader.push('Calitatea datelor');
-			
-// 			// write header to file
-// 			file.write(`${tableHeader.join(';')}\n`);
-//     }
-
-//     // get year column
-//     const yearColumn = $('tr')
-//       .filter((i, row) => $(row)
-//         .children().length === 1)
-//       .slice(1)
-//       .eq(0);
-
-//     // for each table row, except titles and info, parse data
-//     $('tr')
-//       // remove sub-header and footer rows
-//       .filter((i, row) => $(row).children().length > 1)
-//       // remove header rows
-//       .slice(1)
-//       .each((i, row) => {
-//         // console.log('inside first loop: ', i);
-//         const rowArr = [];
-//         $(row)
-//           .find('th')
-//           .each((j, elem) => {
-//             // console.log('inside second loop: ', j);
-//             const rowItem = $(elem).text();
-//             // console.log(rowItem);
-//             if (rowItem !== '-') {
-//               rowArr.push(rowItem.trim());
-//             } else {
-//               // if text is missing, copy from previous row
-//               rowArr.push(tableArr[tableArr.length - 1][j]);
-//             }
-//           });
-
-//         // add year item
-//         const yearValue = $(yearColumn).text().trim().split(' ');
-//         rowArr.push(yearValue[1]);
-
-//         // add data item
-//         const rowData = $(row).find('td');
-//         rowArr.push($(rowData).text());
-
-//         // add data quality item
-//         let dataQlty = 'definitive';
-//         if ($(rowData).has('u').length > 0) {
-//           // underline data stands for 'provizorii'
-//           dataQlty = 'provizorii';
-//         } else if ($(rowData).has('strong').length > 0) {
-//           // bold & underline data stands for 'semidefinitive'
-//           if ($(rowData).has('strong').has('u').length > 0) {
-//             dataQlty = 'semidefinitive';
-//           } else {
-//             // bold data stands for 'revizuite'
-//             dataQlty = 'revizuite';
-//           }
-//         }
-//         rowArr.push(dataQlty);
-
-//         // push new row to array
-//         // console.log(rowArr);
-//         tableArr.push(rowArr);
-//       });
-		
-// 		// write data to file
-// 		console.log('\x1b[35m%s\x1b[0m', `${tableName}  @transformHtmlTable:: save data to file > `);
-// 		tableArr.forEach((row) => { file.write(`${row.join(';')}\n`); });
-		
-//     // add values to the table array
-//     // returnArr = returnArr.concat(tableArr);
-//   });
-
-//   // add header
-//   // returnArr.splice(0, 0, tableHeader);
-
-//   // return new array
-//   console.log(`\n${tableName}  @transformHtmlTable:: transform finished!`);
-//   // console.log(returnArr);
-	
-// 	// close write file
-// 	file.end();
-//   console.log('\x1b[35m%s\x1b[0m', `\n${tableName}  @transformHtmlTable::saveCSV - DONE!`);
-// }
-
-
-// ////////////////////////////////////////////////////////////////////////////////////////////
-
 // download table from DB
-async function downloadTable(tablePrefix, tableName, item) {
+async function downloadTable(tablePrefix, tableName, table, errorFile) {
   console.log('\x1b[34m%s\x1b[0m', '\n@downloadTable >>>>>>>');
 
   // let outputData = [];
 
   // create the columns table containing all columns with all options
-  const columns = item.dimensionsMap.map(column => column.options);
+  const columns = table.dimensionsMap.map(column => column.options);
   console.log('@downloadTable::Columns >>> ', columns.length);
   console.log('@downloadTable::Table Name >>> ', tableName);
 
@@ -656,86 +635,152 @@ async function downloadTable(tablePrefix, tableName, item) {
 
   // create the query arrays
   const queryArrays = [];
+  let tableKind = '';
 
   // calculate permutations for the remanining columns
   // test if lenght is 0, some tables have only years and UM columns
   if (columns.length > 0) {
-    const builtArrays = buildPermutations(columns, queryLimit);
+    const { permutations, tableType } = buildPermutations(columns, queryLimit);
+    tableKind = tableType;
     // create the query arrays
     yearsColumn.forEach((year) => {
-      builtArrays.forEach((perm) => {
+      permutations.forEach((perm) => {
         queryArrays.push([...perm, [year], umColumn]);
       });
     });
   } else {
+    tableKind = 'two-columns';
     yearsColumn.forEach((year) => {
       queryArrays.push([[year], umColumn]);
     });
   }
 
   // request data
-  const response = await getTableData(tablePrefix, tableName, item, queryArrays);
+  const response = await getTableData(tablePrefix, tableName, tableKind, table, queryArrays, errorFile);
 
   // return table
   return response;
 }
 
 
-// write table data to CSV file
-// function saveCSV(tableData, tableName) {
-//   console.log('\x1b[34m%s\x1b[0m', `\n@saveCSV::Write data to table: ${tableName}`);
-
-//   const now = new Date();
-//   const currentDate = dateFormat(now, 'isoDate');
-
-//   // write table to file
-//   const file = fs.createWriteStream(`${jsonOutputPath}/${currentDate}_${tableName}.csv`);
-//   file.on('error', (err) => { console.log('@saveCSV::ERROR: writing CSV file >> ', err); });
-//   tableData.forEach((row) => { file.write(`${row.join(';')}\n`); });
-//   file.end();
-//   console.log(`@saveCSV::Done - Table ${tableName}`);
-// }
-
-
-// write table data to JSON file
-// function saveJSON(tablePrefix, tableName, htmlArray) {
-//   console.log('\x1b[34m%s\x1b[0m', `\n@saveJSON::Write data to table: ${tablePrefix} ${tableName}`);
-
-//   const now = new Date();
-//   const currentDate = dateFormat(now, 'isoDate');
-
-//   const output = {};
-//   output.tableName = tableName;
-//   output.html = htmlArray;
-
-//   // write table to file
-//   fs.writeFile(`${jsonOutputPath}/${currentDate}_${tablePrefix}_${tableName}.json`, JSON.stringify(output), 'utf8', () => console.log(`${tableName} @saveJSON - Done!`));
-// }
-
-
 // ///////////////////////////////////////////////////////////////////////////////////////
-// // download DataBase data from INSSE
-
-function downloadDB(ancestorsFilePath, headersFilePath) {
-  console.log('\x1b[34m%s\x1b[0m', '\n@downloadDB >>>>>>>');
+// // get one table
+async function getTable(programIndex, dbStartTime, dbStartDate, tableId) {
 
   const durationArr = [];
 
-  // start timer
-  const dbStartTime = new Date();
-  const dbStartDate = dateFormat(dbStartTime, 'isoDate');
-  console.log('\x1b[33m%s\x1b[0m', '@downloadDB:: Timer started\n');
-
   // read table ancestors from file
-  const tempoL1 = readFile(ancestorsFilePath);
+  const tempoL1 = readFile(tempoL1File);
   const ancestors = tempoL1.level1;
 
   // read table headers from file
-  const tempoL3 = readFile(headersFilePath);
+  const tempoL3 = readFile(tempoL3File);
 
-  // // test saveJSON file
-  // const testJson = readFile(`${jsonOutputPath}/2018-12-11_A.1_POP107B.json`);
-  // testJson.html.forEach((item) => { console.log(item); });
+  // open log to save table errors
+  const errorFile = fs.createWriteStream(`${csvOutputPath}/${dbStartDate}__log_errors_${programIndex}.csv`);
+  errorFile.on('error', (err) => {
+    console.log('\x1b[31m%s\x1b[0m', 'ERROR Log file started >>');
+    console.log(err);
+  });
+  const logErrorHeader = ['tablePrefix', 'tableName', 'progressIndex', 'process', 'message'];
+  errorFile.write(`${logErrorHeader.join(';')}\n`);
+
+  // open log to save tables completed and times
+  const logFile = fs.createWriteStream(`${csvOutputPath}/${dbStartDate}__log_tables_${programIndex}.csv`);
+  logFile.on('error', (err) => {
+    console.log('\x1b[31m%s\x1b[0m', 'TABLES Log file started >>');
+    console.log(err);
+  });
+  const logTablesHeader = ['prefix', 'tableName', 'startTime', 'finishTime'];
+  logFile.write(`${logTablesHeader.join(';')}\n`);
+
+
+  // get table header from
+  const tablesList = tempoL3.level3.filter(item => item.tableName === tableId);
+
+  // if table was not found
+  if (tablesList.length === 0) {
+    console.log(`ERROR: no table with ${tableId} name was found!`);
+
+  // if table was found
+  } else {
+    // assign found table to element
+    const element = tablesList[0];
+
+    // start timer
+    const tableStartTime = new Date();
+    const tableCode = element.ancestors[3].code;
+    const parentCode = element.ancestors[2].code;
+
+    // get ancestors data
+    const tableIndex = ancestors.filter(item => item.context.code === tableCode)[0].context.name.split(' ')[0].replace('.', '');
+    const ancestorPrefix = ancestors.filter(item => item.context.code === parentCode)[0].context.name.split(' ')[0];
+    const tablePrefix = `${ancestorPrefix}.${tableIndex}`;
+    const { tableName } = element;
+    const now = new Date();
+    const currentDate = dateFormat(now, 'isoDate');
+    const filePath = `${csvOutputPath}/${currentDate}_${tablePrefix}_${tableName}.csv`;
+
+    // test if file exists
+    if (fs.existsSync(filePath)) {
+      console.log('\x1b[32m%s\x1b[0m', `\n${tablePrefix} ${tableName} @downloadDB:: file already exists, next table ...`);
+    } else {
+      // create CSV file to stop other processes from working on it
+      fs.writeFileSync(`${csvOutputPath}/${currentDate}_${tablePrefix}_${tableName}.csv`, '', 'utf8');
+      console.log('\x1b[32m%s\x1b[0m', `\n${tablePrefix} ${tableName} @downloadDB:: file created, start process ...`);
+
+      // download table from DB
+      try {
+        console.log('\x1b[32m%s\x1b[0m', `\n${tablePrefix} ${tableName} @downloadDB:: download started ...`);
+        const response = await downloadTable(tablePrefix, tableName, element, errorFile);
+        // save table times to file
+        logFile.write(`${response.join(';')}\n`);
+      } catch (err) { console.log(err); }
+
+      // print execution time for table
+      const tableDuration = new Date() - tableStartTime;
+      durationArr.push(tableDuration);
+      console.info('\x1b[33m%s\x1b[0m', `\nTable execution time: ${Math.floor(tableDuration / 1000)}s`);
+
+      const passedTime = new Date() - dbStartTime;
+      console.info('\x1b[33m%s\x1b[0m', `Elapsed execution time: ${Math.floor(passedTime / 1000)}s`);
+    // end for loop
+    }
+    // end test individual table
+  }
+}
+
+
+// ///////////////////////////////////////////////////////////////////////////////////////
+// // get all tables
+function getTables(programIndex, dbStartTime, dbStartDate) {
+
+  const durationArr = [];
+
+  // read table ancestors from file
+  const tempoL1 = readFile(tempoL1File);
+  const ancestors = tempoL1.level1;
+
+  // read table headers from file
+  const tempoL3 = readFile(tempoL3File);
+
+  // open log to save table errors
+  const errorFile = fs.createWriteStream(`${csvOutputPath}/${dbStartDate}__log_errors_${programIndex}.csv`);
+  errorFile.on('error', (err) => {
+    console.log('\x1b[31m%s\x1b[0m', 'ERROR Log file started >>');
+    console.log(err);
+  });
+  const logErrorHeader = ['tablePrefix', 'tableName', 'progressIndex', 'process', 'message'];
+  errorFile.write(`${logErrorHeader.join(';')}\n`);
+
+  // open log to save tables completed and times
+  const logFile = fs.createWriteStream(`${csvOutputPath}/${dbStartDate}__log_tables_${programIndex}.csv`);
+  logFile.on('error', (err) => {
+    console.log('\x1b[31m%s\x1b[0m', 'TABLES Log file started >>');
+    console.log(err);
+  });
+  const logTablesHeader = ['prefix', 'tableName', 'startTime', 'finishTime'];
+  logFile.write(`${logTablesHeader.join(';')}\n`);
 
   // separate the array into 4 chunks
   const batchArray = [
@@ -755,23 +800,10 @@ function downloadDB(ancestorsFilePath, headersFilePath) {
     tempoL3.level3.slice(1300),
   ];
 
-  // open log save file
-  const logFile = fs.createWriteStream(`${csvOutputPath}/${dbStartDate}__log_file.csv`);
-  logFile.on('error', (err) => {
-    console.log('\x1b[31m%s\x1b[0m', 'Log file started >>');
-    console.log(err);
-  });
-  const logFileHeader = ['prefix', 'tableName', 'startTime', 'finishTime'];
-  logFile.write(`${logFileHeader.join(';')}\n`);
-
-  // // test individual table
-  tempoL3.level3.filter(item => item.tableName === 'GOS109A').forEach(async (element) => {
-
-  // // for each batch loop
-  // batchArray.forEach(async (batch) => {
-  //   // for each table header get table data
-  //   for (element of batch) {
-  
+  // for each batch loop
+  batchArray.forEach(async (batch) => {
+    // for each table header get table data
+    for (element of batch) {
       // start timer
       const tableStartTime = new Date();
       const tableCode = element.ancestors[3].code;
@@ -788,29 +820,70 @@ function downloadDB(ancestorsFilePath, headersFilePath) {
 
       // test if file exists
       if (fs.existsSync(filePath)) {
-        console.log('\x1b[32m%s\x1b[0m', `\n${tablePrefix} ${tableName} @downloadDB:: file already exists, exiting ...`);
+        console.log('\x1b[32m%s\x1b[0m', `\n${tablePrefix} ${tableName} @downloadDB:: file already exists, next table ...`);
       } else {
+        // create CSV file to stop other processes from working on it
+          fs.writeFileSync(`${csvOutputPath}/${currentDate}_${tablePrefix}_${tableName}.csv`, '', 'utf8');
+          console.log('\x1b[32m%s\x1b[0m', `\n${tablePrefix} ${tableName} @downloadDB:: file created, start process ...`);
+
         // download table from DB
         try {
           console.log('\x1b[32m%s\x1b[0m', `\n${tablePrefix} ${tableName} @downloadDB:: download started ...`);
-          const response = await downloadTable(tablePrefix, tableName, element);
+          const response = await downloadTable(tablePrefix, tableName, element, errorFile);
           // save table times to file
           logFile.write(`${response.join(';')}\n`);
         } catch (err) { console.log(err); }
-  
+
         // print execution time for table
         const tableDuration = new Date() - tableStartTime;
         durationArr.push(tableDuration);
         console.info('\x1b[33m%s\x1b[0m', `\nTable execution time: ${Math.floor(tableDuration / 1000)}s`);
-  
+
         const passedTime = new Date() - dbStartTime;
         console.info('\x1b[33m%s\x1b[0m', `Elapsed execution time: ${Math.floor(passedTime / 1000)}s`);
-      // };
+      };
     // end for loop
     }
   // end batchArray forEach loop
   });
-  // });
+}
+
+
+// ///////////////////////////////////////////////////////////////////////////////////////
+// // download DataBase data from INSSE
+
+function downloadDB() {
+  // start timer
+  const dbStartTime = new Date();
+  const dbStartDate = dateFormat(dbStartTime, 'isoDate');
+  console.log('\x1b[33m%s\x1b[0m', '@downloadDB:: Timer started\n');
+
+  // get third command line argument
+  const tableName = process.argv[2] || '';
+  console.log('\x1b[34m%s\x1b[0m', `\n@downloadDB >>>>>>> ${tableName}`);
+
+  // test if log files exist, else create them and determine index
+  let programIndex = 0;
+  while (true) {
+    // test if file exists
+    if (fs.existsSync(`${csvOutputPath}/${dbStartDate}__log_errors_${programIndex}.csv`) || fs.existsSync(`${csvOutputPath}/${dbStartDate}__log_tables_${programIndex}.csv`)) {
+      programIndex += 1;
+    } else {
+      // create CSV log files to lock programIndex
+      fs.writeFileSync(`${csvOutputPath}/${dbStartDate}__log_errors_${programIndex}.csv`);
+      fs.writeFileSync(`${csvOutputPath}/${dbStartDate}__log_tables_${programIndex}.csv`);
+      break;
+    }
+  }
+
+  // if tableName is not empty, download table - usually for testing purposes
+  if (tableName !== '') {
+    getTable(programIndex, dbStartTime, dbStartDate, tableName);
+
+  // else, download all tables
+  } else {
+    getTables(programIndex, dbStartTime, dbStartDate);
+  }
 
 
   // end timer
@@ -822,4 +895,4 @@ function downloadDB(ancestorsFilePath, headersFilePath) {
 // ////////////////////////////////////////////////////////////////////////////
 // // MAIN
 
-downloadDB(tempoL1File, tempoL3File);
+downloadDB();
