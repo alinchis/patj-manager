@@ -21,6 +21,7 @@ const glob = require('glob');
 const inputPath = '../../../docker-data/control/insse';
 // const jsonOutputPath = '../../../docker-data/control/insse/json';
 const csvOutputPath = '../../../docker-data/control/insse/csv/';
+const logOutputPath = '../../../docker-data/control/insse/logs/';
 const tempoL1File = `${inputPath}/tempoL1.json`;
 const tempoL3File = `${inputPath}/tempoL3.json`;
 const requestPath = 'http://statistici.insse.ro:8077/tempo-ins/matrix/';
@@ -1128,12 +1129,12 @@ async function getTable(dbStartTime, dbStartDate, tableId) {
   let programIndex = 0;
   while (true) {
     // test if file exists
-    if (fs.existsSync(`${csvOutputPath}/${dbStartDate}__log_errors_${programIndex}.csv`) || fs.existsSync(`${csvOutputPath}/${dbStartDate}__log_tables_${programIndex}.csv`)) {
+    if (fs.existsSync(`${logOutputPath}/${dbStartDate}__log_errors_${programIndex}.csv`) || fs.existsSync(`${logOutputPath}/${dbStartDate}__log_tables_${programIndex}.csv`)) {
       programIndex += 1;
     } else {
       // create CSV log files to lock programIndex
-      fs.writeFileSync(`${csvOutputPath}/${dbStartDate}__log_errors_${programIndex}.csv`);
-      fs.writeFileSync(`${csvOutputPath}/${dbStartDate}__log_tables_${programIndex}.csv`);
+      fs.writeFileSync(`${logOutputPath}/${dbStartDate}__log_errors_${programIndex}.csv`);
+      fs.writeFileSync(`${logOutputPath}/${dbStartDate}__log_tables_${programIndex}.csv`);
       break;
     }
   }
@@ -1148,7 +1149,7 @@ async function getTable(dbStartTime, dbStartDate, tableId) {
   const tempoL3 = readFile(tempoL3File);
 
   // open log to save table errors
-  const errorFile = fs.createWriteStream(`${csvOutputPath}/${dbStartDate}__log_errors_${programIndex}.csv`);
+  const errorFile = fs.createWriteStream(`${logOutputPath}/${dbStartDate}__log_errors_${programIndex}.csv`);
   errorFile.on('error', (err) => {
     console.log('\x1b[31m%s\x1b[0m', 'ERROR Log file started >>');
     console.log(err);
@@ -1157,7 +1158,7 @@ async function getTable(dbStartTime, dbStartDate, tableId) {
   errorFile.write(`${logErrorHeader.join(';')}\n`);
 
   // open log to save tables completed and times
-  const logFile = fs.createWriteStream(`${csvOutputPath}/${dbStartDate}__log_tables_${programIndex}.csv`);
+  const logFile = fs.createWriteStream(`${logOutputPath}/${dbStartDate}__log_tables_${programIndex}.csv`);
   logFile.on('error', (err) => {
     console.log('\x1b[31m%s\x1b[0m', 'TABLES Log file started >>');
     console.log(err);
@@ -1233,12 +1234,12 @@ function getTables(dbStartTime, dbStartDate, tableArray = []) {
   let programIndex = 0;
   while (true) {
     // test if file exists
-    if (fs.existsSync(`${csvOutputPath}/${dbStartDate}__log_errors_${programIndex}.csv`) || fs.existsSync(`${csvOutputPath}/${dbStartDate}__log_tables_${programIndex}.csv`)) {
+    if (fs.existsSync(`${logOutputPath}/${dbStartDate}__log_errors_${programIndex}.csv`) || fs.existsSync(`${logOutputPath}/${dbStartDate}__log_tables_${programIndex}.csv`)) {
       programIndex += 1;
     } else {
       // create CSV log files to lock programIndex
-      fs.writeFileSync(`${csvOutputPath}/${dbStartDate}__log_errors_${programIndex}.csv`);
-      fs.writeFileSync(`${csvOutputPath}/${dbStartDate}__log_tables_${programIndex}.csv`);
+      fs.writeFileSync(`${logOutputPath}/${dbStartDate}__log_errors_${programIndex}.csv`);
+      fs.writeFileSync(`${logOutputPath}/${dbStartDate}__log_tables_${programIndex}.csv`);
       break;
     }
   }
@@ -1253,7 +1254,7 @@ function getTables(dbStartTime, dbStartDate, tableArray = []) {
   const tempoL3 = readFile(tempoL3File);
 
   // open log to save table errors
-  const errorFile = fs.createWriteStream(`${csvOutputPath}/${dbStartDate}__log_errors_${programIndex}.csv`);
+  const errorFile = fs.createWriteStream(`${logOutputPath}/${dbStartDate}__log_errors_${programIndex}.csv`);
   errorFile.on('error', (err) => {
     console.log('\x1b[31m%s\x1b[0m', 'ERROR Log file started >>');
     console.log(err);
@@ -1262,7 +1263,7 @@ function getTables(dbStartTime, dbStartDate, tableArray = []) {
   errorFile.write(`${logErrorHeader.join(';')}\n`);
 
   // open log to save tables completed and times
-  const logFile = fs.createWriteStream(`${csvOutputPath}/${dbStartDate}__log_tables_${programIndex}.csv`);
+  const logFile = fs.createWriteStream(`${logOutputPath}/${dbStartDate}__log_tables_${programIndex}.csv`);
   logFile.on('error', (err) => {
     console.log('\x1b[31m%s\x1b[0m', 'TABLES Log file started >>');
     console.log(err);
@@ -1402,7 +1403,7 @@ function checkLogs() {
 
   // read tables ids from logs
   const fileName = '????-??-??__log_tables_*.csv';
-  const logsArray = glob.sync(fileName, { cwd: csvOutputPath });
+  const logsArray = glob.sync(fileName, { cwd: logOutputPath });
   // console.log(logsArray);
 
   // create finished tables array
@@ -1415,7 +1416,7 @@ function checkLogs() {
   logsArray.forEach((item) => {
     // read csv file to array
     console.log(`Log file: ${item}`);
-    const logFile = fs.readFileSync(`${csvOutputPath}${item}`).toString().split('\n');
+    const logFile = fs.readFileSync(`${logOutputPath}${item}`).toString().split('\n');
     // remove column header
     logFile.shift();
     // for each row in array
