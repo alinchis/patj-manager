@@ -1412,10 +1412,11 @@ function checkLogs() {
   // create unfinished tables array
   const unfinishedArr = [];
 
+  console.log('\x1b[34m%s\x1b[0m', '\nFound log files:');
   // for each file in array of logs
   logsArray.forEach((item) => {
     // read csv file to array
-    console.log(`Log file: ${item}`);
+    console.log(`${item}`);
     const logFile = fs.readFileSync(`${logOutputPath}${item}`).toString().split('\n');
     // remove column header
     logFile.shift();
@@ -1426,13 +1427,14 @@ function checkLogs() {
     });
   });
   // print the finished tables array
-  console.log(finishedArr.length);
+  // console.log(finishedArr.length);
 
   // get the unfinished tables array
   tablesList.forEach((item) => {
     if (!finishedArr.includes(item)) unfinishedArr.push(item);
   });
   // print the unfinished tables array
+  console.log('\x1b[32m%s\x1b[0m', '\nUnfinished tables: ');
   console.log(unfinishedArr);
 }
 
