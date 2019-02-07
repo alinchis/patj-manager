@@ -63,12 +63,12 @@ function uploadCSV() {
     // const ancestors = tempoL1.level1;
     const tempoL3 = readFile(tempoL3File);
     // filter the tables containing localities data ( 86 tables )
-    const childrenArr = tempoL3.level3.filter(item => item.matrixName.includes('localitati'));
+    const childrenArr = tempoL3.level3.filter(item => item.matrixName.includes('si localitati'));
     console.log(`\nTOTAL COUNT = ${childrenArr.length}\n`);
 
     // save list to file
     const indexListStream = fs.createWriteStream(`${extractsOutputPath}/index_list.csv`);
-    indexListStream.write(`"indicator";"nume"\n`);
+    indexListStream.write('"indicator";"nume"\n');
 
     // for each table, filter the given county
     childrenArr.forEach((child, index) => {
@@ -76,6 +76,7 @@ function uploadCSV() {
         // save item to index file
         const writeLine = `"${tableName}";"${child.matrixName}"\n`;
         indexListStream.write(writeLine);
+        indexListStream.on('error', (err) => {console.log(err);});
 
         // console.log(child);
         // const tableIndex = ancestors.filter(item => item.context.code === tableCode)[0].context.name.split(' ')[0].replace('.', '');
@@ -110,12 +111,14 @@ function uploadCSV() {
             rl.on('line', (line) => {
                 lineCounter += 1;
                 if (lineCounter === 1) {
-                    streams.forEach(stream => stream.write(`${line}\n`));
+                    const newLine = line.replace(/;(Localitati)\s*;/gm, ';SIRUTA;$1;');
+                    streams.forEach(stream => stream.write(`${newLine}\n`));
                 } else {
                     streams.forEach((stream, itemIndex) => {
                         if (line.includes(exTable[itemIndex].name)) {
                             // console.log(`\n${line}`);
-                            stream.write(`${line}\n`);
+                            const newLine = line.replace(/;"(\d+)\s([^"]+)";/gm, ';"$1";"$2";');
+                            if(line !== newLine) stream.write(`${newLine}\n`);
                         }
                     })
                 }
@@ -129,7 +132,7 @@ function uploadCSV() {
         }
     
     // close index file
-    indexListStream.close();
+    // indexListStream.close();
     });
 
     // upload tables to database
