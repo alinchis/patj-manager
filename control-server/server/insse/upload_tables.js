@@ -4,6 +4,7 @@
 
 // import libraries
 const fs = require('fs');
+const { once } = require('events');
 const axios = require('axios');
 // const logger = require('../../node_modules/morgan/index');
 const cheerio = require('cheerio');
@@ -151,13 +152,16 @@ function extractCounties() {
 // ///////////////////////////////////////////////////////////////////////////////////////
 // get array of time instances from table files
 
-function getTimesArr(index, currentFileName, filePath) {
-    return new Promise((resolve) => {
+async function getTimesArr(index, currentFileName, filePath) {
     // open file for first stage processing
     const inStream = readline.createInterface({
         input: fs.createReadStream(filePath),
+        crlfDelay: Infinity,
         // output: process.stdout,
     });
+    // Note: we use the crlfDelay option to recognize all instances of CR LF
+    // ('\r\n') in input.txt as a single line break.
+
 
     // create time array
     const timesArr = [];
@@ -168,17 +172,22 @@ function getTimesArr(index, currentFileName, filePath) {
     let aniIndex = -1;
     let umIndex = -1;
     let valoareIndex = -1;
+    let oldHeader = [];
 
     // parse each line
-    inStream.on('line', (line) => {
+    for await (const line of inStream) {
         lineCounter += 1;
 
         // break line into array
-        const lineArr = line.replace('"', '').replace('\n', '').split(';');
+        const lineArr = line.replace(/"/g, '').replace('\n', '').split(';');
 
         // header item
         if (lineCounter === 1) {
             // console.log(lineArr);
+            oldHeader = [];
+            for (item of lineArr) {
+                oldHeader.push(`"${item.trim()}"`);
+            }
             perioadeIndex = lineArr.indexOf('Perioade');
             aniIndex = lineArr.indexOf('Ani');
             umIndex = aniIndex + 1;
@@ -192,37 +201,39 @@ function getTimesArr(index, currentFileName, filePath) {
                timeInstance = `"${lineArr[aniIndex]}"`;
             // if time is represented in 'Perioade' and 'Ani'
             } else {
-                timeInstance = `"${lineArr[perioadeIndex]} + ' ' + ${lineArr[aniIndex]}"`;
+                if (lineArr[perioadeIndex] === 'anual') {
+                    timeInstance = `"${lineArr[aniIndex]}"`;
+                } else {
+                    timeInstance = `"${lineArr[perioadeIndex]} ${lineArr[aniIndex]}"`;
+                }
             }
             // if item is new add it into timesArr
             if (!timesArr.includes(timeInstance)) timesArr.push(timeInstance);
         }
         
-    });
+    };
     inStream.on('error', (err) => {
         console.log(err);
     });
-    // inStream.on('close', (line) => {
-    //     // console.log(line);
-    //     console.log(`${index} :: ${currentFileName}: time array finished!`);
-    //     return {
-    //         timesArr,
-    //         lineCounter,
-    //         perioadeIndex,
-    //         aniIndex,
-    //         umIndex,
-    //         valoareIndex,
-    //     };
-    // });
-    inStream.on('close', resolve({
-                timesArr,
-                lineCounter,
-                perioadeIndex,
-                aniIndex,
-                umIndex,
-                valoareIndex,
-            }));
-});
+    
+    console.log(`${index} :: ${currentFileName}: time array finished!`);
+    return {
+        oldHeader,
+        timesArr,
+        lineCounter,
+        perioadeIndex,
+        aniIndex,
+        umIndex,
+        valoareIndex,
+    };
+}
+
+
+// ///////////////////////////////////////////////////////////////////////////////////////
+// transform table - read old table and save new version in separate folder
+
+function transformTable(headerInfo) {
+    
 }
 
 
@@ -275,7 +286,8 @@ function transformTables() {
             // pass data into return object
             returnObj.fileName = currentFileName;
             returnObj.filePath = currentFilePath;
-            returnObj.timesArr = await headerInfo.timesArr;
+            returnObj.oldHeader = headerInfo.oldHeader;
+            returnObj.timesArr = headerInfo.timesArr;
             returnObj.lineCounter = headerInfo.lineCounter;
             returnObj.perioadeIndex = headerInfo.perioadeIndex;
             returnObj.aniIndex = headerInfo.aniIndex;
@@ -283,14 +295,35 @@ function transformTables() {
             returnObj.valoareIndex = headerInfo.valoareIndex;
 
             console.log(`${index} :: ${currentFileName} : headerInfo aquired`);
-            console.log(`${index} :: ${returnObj.timesArr}`);
+            // console.log(`${index} :: ${returnObj.timesArr}`);
+
+            // create new header
+            // insert cells before time instance
+            if (returnObj.perioadeIndex === -1) {
+                returnObj.newHeader = returnObj.oldHeader.slice(0, returnObj.aniIndex);
+            } else {
+                returnObj.newHeader = returnObj.oldHeader.slice(0, returnObj.perioadeIndex);
+            };
+            // insert time array
+            returnObj.newHeader = returnObj.newHeader.concat(returnObj.timesArr);
+
+            // insert um column
+            returnObj.newHeader.push(returnObj.oldHeader[returnObj.umIndex]);
+
+            console.log(`${index} :: ${currentFileName} : new header created`);
+            console.log(`${index} :: ${returnObj.newHeader}`);
 
         } else {
             console.log(`\n${fileName} NOT FOUND!\n`);
         }
 
-        // return new values
+        // return new value for current item
         return returnObj;
+    });
+
+    // for each table item run transform operation
+    selectedTArr.forEach((item) => {
+        transformTable(item);
     });
 }
 
