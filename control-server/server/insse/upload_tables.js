@@ -12,14 +12,15 @@ const cheerio = require('cheerio');
 const dateFormat = require('dateformat');
 const glob = require('glob');
 const readline = require('readline');
+// const redis = require('redis');
 
 
 // paths
 const inputPath = '../../../docker-data/control/insse';
 // const jsonOutputPath = '../../../docker-data/control/insse/json';
-const csvOutputPath = '../../../docker-data/control/insse/csv/';
-const csvTransformPath = '../../../docker-data/control/insse/extracts/csv-transform/';
-const extractsOutputPath = '../../../docker-data/control/insse/extracts/';
+const csvOutputPath = '../../../docker-data/control/insse/csv';
+const csvTransformPath = '../../../docker-data/control/insse/extracts/csv-transform';
+const extractsOutputPath = '../../../docker-data/control/insse/extracts';
 // const tempoL1File = `${inputPath}/tempoL1.json`;
 // const tempoL2File = `${inputPath}/tempoL2.json`;
 const tempoL3File = `${inputPath}/tempoL3.json`;
@@ -28,6 +29,12 @@ const tempoL3File = `${inputPath}/tempoL3.json`;
 // const stringifier = csv.stringify();
 // INSSE Tempo query limit (no of cells)
 // const queryLimit = 30000;
+
+// create redis client
+// const rStorage = redis.createClient();
+// rStorage.on('error', (err) => {
+//     console.log(`Error: ${err}`);
+// });
 
 
 // ////////////////////////////////////////////////////////////////////////////////////////////
@@ -47,18 +54,13 @@ function readFile(filePath) {
 // ///////////////////////////////////////////////////////////////////////////////////////
 // // extract counties from files that have localities level data
 
-function extractCounties() {
-    // set extracts
-    const exTable = [
-        { name: 'Suceava', code: 'SV' },
-        { name: 'Salaj', code: 'SJ' },
-        { name: 'Tulcea', code: 'TL' },
-    ];
+function extractCounties(exTable) {
 
     // start timer
     const dbStartTime = new Date();
     const dbStartDate = dateFormat(dbStartTime, 'isoDate');
     console.log('\x1b[33m%s\x1b[0m', '@extractCounties:: Timer started\n');
+    console.log(`${dbStartTime}`);
 
     // read table ancestors from file
     // const tempoL1 = readFile(tempoL1File);
@@ -78,7 +80,7 @@ function extractCounties() {
         // save item to index file
         const writeLine = `"${tableName}";"${child.matrixName}"\n`;
         indexListStream.write(writeLine);
-        indexListStream.on('error', (err) => {console.log(err);});
+        indexListStream.on('error', (err) => { console.log(`ERROR:: Write Stream: ${err}`); });
 
         // console.log(child);
         // const tableIndex = ancestors.filter(item => item.context.code === tableCode)[0].context.name.split(' ')[0].replace('.', '');
@@ -86,12 +88,12 @@ function extractCounties() {
         // const tablePrefix = `${ancestorPrefix}.${tableIndex}`;
         const fileName = `????-??-??_*_${tableName}.csv`;
         // test if file exists
-        if (glob.sync(fileName, { cwd: csvTransformPath }).length > 0) {
+        if (glob.sync(fileName, { cwd: csvOutputPath }).length > 0) {
             console.log(`file ${index} found`);
 
             // get actual filename
             const currentFileName = glob.sync(fileName, { cwd: csvOutputPath })[0];
-            const currentFilePath = csvTransformPath + currentFileName;
+            const currentFilePath = `${csvOutputPath}/${currentFileName}`;
             console.log(`${index} :: ${currentFileName}: START`);
 
             // create new files to hold the filtered values
@@ -112,24 +114,26 @@ function extractCounties() {
             // parse each line
             rl.on('line', (line) => {
                 lineCounter += 1;
+                // if header line
                 if (lineCounter === 1) {
-                    const newLine = line.replace(/;"(Localitati)\s*";/gm, ';"SIRUTA";"$1";');
+                    let newLine = line.replace(/;(Localitati)\s*;/gm, ';SIRUTA;$1;');
+                    newLine = newLine.replace(/;(Municipii si orase)\s*;/gm, ';SIRUTA;$1;');
                     streams.forEach(stream => stream.write(`${newLine}\n`));
                     // print new header to console
                     console.log(`\n${index} :: ${currentFileName}: HEADER`);
                     console.log(newLine);
+                // if data line
                 } else {
                     streams.forEach((stream, itemIndex) => {
                         if (line.includes(exTable[itemIndex].name)) {
                             // console.log(`\n${line}`);
                             const newLine = line.replace(/;"(\d+)\s([^"]+)";/gm, ';"$1";"$2";');
-                            if(line !== newLine) stream.write(`${newLine}\n`);
+                            if (line !== newLine) stream.write(`${newLine}\n`);
                         }
-                    })
+                    });
                 }
-
             });
-            rl.on('close', (line) => {
+            rl.on('close', () => {
                 // console.log(line);
                 console.log(`${index} :: ${currentFileName}: done reading file.`);
                 streams.forEach(stream => stream.close());
@@ -146,69 +150,6 @@ function extractCounties() {
     // end timer
     const dbDuration = new Date() - dbStartTime;
     console.info('\x1b[33m%s\x1b[0m', `\nProcess execution time: ${Math.floor(dbDuration / 1000)}s`);
-}
-
-
-// ///////////////////////////////////////////////////////////////////////////////////////
-// extract one county
-
-function extractOneCounty(tableId) {
-    // set extracts
-    const exTable = [
-        { name: 'Suceava', code: 'SV' },
-        { name: 'Salaj', code: 'SJ' },
-        { name: 'Tulcea', code: 'TL' },
-    ];
-
-    const tableName = tableId;
-    const fileName = `????-??-??_*_${tableName}.csv`;
-    // test if file exists
-    if (glob.sync(fileName, { cwd: csvOutputPath }).length > 0) {
-        console.log(`${tableName}: file found`);
-
-        // get actual filename
-        const currentFileName = glob.sync(fileName, { cwd: csvOutputPath })[0];
-        const currentFilePath = csvTransformPath + currentFileName;
-        console.log(`${currentFileName}: START`);
-
-        // create new files to hold the filtered values
-        const outStream = fs.createWriteStream(`${csvOutputPath}/${currentFileName}_`);
-
-        // parse file, line by line
-        const rl = readline.createInterface({
-            input: fs.createReadStream(currentFilePath),
-            // output: process.stdout,
-        });
-
-        // set line counter
-        let lineCounter = 0;
-
-        // parse each line
-        rl.on('line', (line) => {
-            lineCounter += 1;
-            if (lineCounter === 1) {
-                const newLine = line.replace(/;"(Localitati)\s*";/gm, ';"SIRUTA";"$1";');
-                outStream.forEach(stream => stream.write(`${newLine}\n`));
-                // print new header to console
-                console.log(`\n${index} :: ${currentFileName}: HEADER`);
-                console.log(newLine);
-            } else {
-                outStream.forEach((stream, itemIndex) => {
-                    if (line.includes(exTable[itemIndex].name)) {
-                        // console.log(`\n${line}`);
-                        const newLine = line.replace(/;"(\d+)\s([^"]+)";/gm, ';"$1";"$2";');
-                        if(line !== newLine) stream.write(`${newLine}\n`);
-                    }
-                })
-            }
-
-        });
-        rl.on('close', (line) => {
-            // console.log(line);
-            console.log(`${index} :: ${currentFileName}: done reading file.`);
-            streams.forEach(stream => stream.close());
-        });
-    }
 }
 
 
@@ -248,6 +189,8 @@ async function getTimesArr(index, currentFileName, filePath) {
         // break line into array
         const lineArrRaw = line.replace('\n', '').split(';');
         const lineArr = line.replace(/"/g, '').replace('\n', '').split(';');
+        // console.log('\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
+        // console.log(lineArr);
 
         // header item
         if (lineCounter === 1) {
@@ -266,11 +209,11 @@ async function getTimesArr(index, currentFileName, filePath) {
         } else {
             let itemInstance = '';
             let timeInstance = '';
-            // verify if 'Perioade' column is present
             // if time is represented only in 'Ani'
             if (perioadeIndex === -1 && luniIndex === -1 && trimestreIndex === -1) {
                 itemInstance = `${lineArrRaw.slice(0, aniIndex).join(';')}`;
                 timeInstance = `"${lineArr[aniIndex]}"`;
+                // console.log(`${lineArr.join()}`);
 
             // if time is represented in 'Perioade' and 'Ani'
             } else if (perioadeIndex !== -1) {
@@ -309,13 +252,17 @@ async function getTimesArr(index, currentFileName, filePath) {
         console.log(err);
     });
 
-    console.log(`${index} :: ${currentFileName}: time array finished!`);
+    console.log('\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
+    console.log(`${index} :: ${currentFileName}: times array finished!`);
+    console.log(`perioadeIndex = ${perioadeIndex}; luniIndex = ${luniIndex}; trimestreIndex = ${trimestreIndex}; aniIndex = ${aniIndex}\n`);
     return {
         oldHeader,
         itemsArr,
         timesArr,
         lineCounter,
         perioadeIndex,
+        luniIndex,
+        trimestreIndex,
         aniIndex,
         umIndex,
         valoareIndex,
@@ -326,28 +273,32 @@ async function getTimesArr(index, currentFileName, filePath) {
 // ///////////////////////////////////////////////////////////////////////////////////////
 // transform table - read old table and save new version in separate folder
 
-function transformTable(headerInfo) {
+function transformTable(headerInfo, countyId) {
     // create variables
     const lineFlagArray = [];
 
     // open write file
-    const outStream = fs.createWriteStream(`${csvTransformPath}/${headerInfo.fileName}`);
+    const outStream = fs.createWriteStream(`${csvTransformPath}/${countyId}/${headerInfo.fileName}`);
+    // const outObj = [];
 
     // write new header to file
-    outStream.write(`${headerInfo.newHeader}\n`);
+    outStream.write(`${headerInfo.newHeader.join(';')}\n`);
 
     // for each new item parse entire table
     headerInfo.itemsArr.forEach(async (headerItem, index) => {
+    // for (let index = 0; index < headerInfo.itemsArr.length; index += 1) {
+        // const headerItem = headerInfo.itemsArr[index];
         console.log(`${index} :: @transform ${headerItem}`);
 
         // create read stream
         const inStream = readline.createInterface({
-            input: fs.createReadStream(`${csvOutputPath}/${headerInfo.fileName}`),
+            input: fs.createReadStream(`${extractsOutputPath}/${countyId}/${headerInfo.fileName}`),
             crlfDelay: Infinity,
             // output: process.stdout,
         });
 
         // create values array
+        // rStorage.set(headerItem, '');
         const timeValues = [];
         for (let i = 0; i < headerInfo.timesArr.length; i += 1) {
             timeValues.push('');
@@ -355,24 +306,29 @@ function transformTable(headerInfo) {
 
         // set markers
         let lineCounter = 0;
+        let valuesCounter = 0;
         let currentUM = '';
 
         console.log(`${index} :: @transform ${headerItem} >>> start for loop\n`);
         // parse each line
-        for await (const line of inStream) {
+        // for await (const line of inStream) {
+        inStream.on('line', (line) => {
             lineCounter += 1;
-            console.log(`${headerInfo.index}: ${headerInfo.tableId} >>> ${index}/${headerInfo.itemsArr.length} :: @transform loop ${lineCounter}/${headerInfo.lineCounter}\n`);
+            if (!lineFlagArray.includes(lineCounter)) {
+                // console.log(`${headerInfo.index}: ${headerInfo.tableId} >>> item ${index}/${headerInfo.itemsArr.length} :: @transform loop line ${lineCounter}/${headerInfo.lineCounter}\n`);
 
-            // break line into array
-            const lineArr = line.replace('\n', '').split(';');
+                // break line into array
+                const lineArr = line.replace('\n', '').split(';');
 
-            // create items
-            let currentItem = '';
-            let currentTime = '';
-            let currentTimeIndex = '';
+                // create items
+                let currentItem = '';
+                let currentTime = '';
+                let currentTimeIndex = '';
+                // console.log(`${headerInfo.perioadeIndex} :: ${headerInfo.luniIndex} :: ${headerInfo.trimestreIndex}`);
 
-            // if normal row
-            if (lineCounter > 1) {
+                // if header row
+                if (lineCounter <= 1) return;
+                // if normal row
                 // if time is represented only in 'Ani'
                 if (headerInfo.perioadeIndex === -1
                     && headerInfo.luniIndex === -1
@@ -380,47 +336,56 @@ function transformTable(headerInfo) {
                     currentItem = lineArr.slice(0, headerInfo.aniIndex).join(';');
                     currentTime = lineArr[headerInfo.aniIndex];
                     currentTimeIndex = headerInfo.timesArr.indexOf(currentTime);
-                    timeValues[currentTimeIndex] = lineArr[headerInfo.valoareIndex];
 
                 // if time is represented in 'Perioade' and 'Ani'
                 } else if (headerInfo.perioadeIndex !== -1) {
                     currentItem = lineArr.slice(0, headerInfo.perioadeIndex).join(';');
-                    currentTime = `${lineArr[headerInfo.perioadeIndex]} ${lineArr[headerInfo.aniIndex]}`;
+                    currentTime = `"${lineArr[headerInfo.perioadeIndex].replace(/"/g, '')} ${lineArr[headerInfo.aniIndex].replace(/"/g, '')}"`;
                     currentTimeIndex = headerInfo.timesArr.indexOf(currentTime);
-                    timeValues[currentTimeIndex] = lineArr[headerInfo.valoareIndex];
 
                 // if time is represented in 'Trimestre' and 'Ani'
                 } else if (headerInfo.trimestreIndex !== -1) {
                     currentItem = lineArr.slice(0, headerInfo.trimestreIndex).join(';');
-                    currentTime = `${lineArr[headerInfo.trimestreIndex]} ${lineArr[headerInfo.aniIndex]}`;
+                    currentTime = `"${lineArr[headerInfo.trimestreIndex].replace(/"/g, '')} ${lineArr[headerInfo.aniIndex].replace(/"/g, '')}"`;
                     currentTimeIndex = headerInfo.timesArr.indexOf(currentTime);
-                    timeValues[currentTimeIndex] = lineArr[headerInfo.valoareIndex];
 
                 // if time is represented in 'Luni' and 'Ani'
                 } else if (headerInfo.luniIndex !== -1) {
                     currentItem = lineArr.slice(0, headerInfo.luniIndex).join(';');
-                    currentTime = `${lineArr[headerInfo.luniIndex]} ${lineArr[headerInfo.aniIndex]}`;
+                    currentTime = `"${lineArr[headerInfo.luniIndex].replace(/"/g, '')} ${lineArr[headerInfo.aniIndex].replace(/"/g, '')}"`;
                     currentTimeIndex = headerInfo.timesArr.indexOf(currentTime);
-                    timeValues[currentTimeIndex] = lineArr[headerInfo.valoareIndex];
                 }
 
-            // if header row
-            } else {
-                // nothing to see here, move along!
+                // console.log(`${headerInfo.index}: ${headerInfo.tableId} >>> item ${index}/${headerInfo.itemsArr.length} :: @transform loop line ${lineCounter}/${headerInfo.lineCounter}`);
+                // console.log(`current item: ${currentItem}\n`);
+                // console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
+                // console.log(`current time: ${currentTime}\n`);
+
+                // if current line item is new
+                if (headerItem === currentItem) {
+                    // console.log(`\n${headerInfo.index}: ${headerInfo.tableId} >>> item ${index}/${headerInfo.itemsArr.length} :: @transform loop line ${lineCounter}/${headerInfo.lineCounter}`);
+                    // increase values counter
+                    valuesCounter += 1;
+                    // console.log(`${headerInfo.index}: ${headerInfo.tableId} >>> item ${index}/${headerInfo.itemsArr.length} :: values ${valuesCounter}/${headerInfo.timesArr.length}`);
+                    // add new line index to array
+                    lineFlagArray.push(lineCounter);
+
+                    // add new value to value array
+                    timeValues[currentTimeIndex] = lineArr[headerInfo.valoareIndex];
+
+                    // update current um
+                    currentUM = lineArr[headerInfo.umIndex];
+                }
+
+                // if we found all values for one item, close stream
+                if (valuesCounter === headerInfo.timesArr.length || lineCounter === headerInfo.lineCounter) {
+                    console.log(`\n${headerItem} :: done!`);
+                    console.log(`${timeValues.join()}\n`);
+                    // outStream.write(`${headerItem};${timeValues.join(';')};${currentUM}\n`);
+                    inStream.close();
+                }
             }
-
-            // if current line item is new
-            if (headerItem === currentItem && !lineFlagArray.includes(lineCounter)) {
-                // add new line index to array
-                lineFlagArray.push(lineCounter);
-
-                // add new value to value array
-                timeValues[currentTimeIndex] = lineArr[headerInfo.valoareIndex];
-
-                // update current um
-                currentUM = lineArr[headerInfo.umIndex];
-            }
-        }
+        });
 
         inStream.on('error', (err) => {
             console.log(err);
@@ -430,8 +395,12 @@ function transformTable(headerInfo) {
             console.log(`${index} :: @transform ${headerItem} >>> inStream CLOSED!\n`);
             // write line to out stream
             outStream.write(`${headerItem};${timeValues.join(';')};${currentUM}\n`);
+            // outObj.push([headerItem, timeValues, currentUM]);
+            console.log('##############################################################');
+            // console.log(outObj);
         });
     });
+    // }
 
     // close write file
     // outStream.close();
@@ -441,7 +410,7 @@ function transformTable(headerInfo) {
 // ///////////////////////////////////////////////////////////////////////////////////////
 // // transform tables - get all time instances into columns
 
-function transformTables(batchIndex) {
+function transformTables(batchIndex, countyId, tablesList = []) {
 
     // start timer
     const dbStartTime = new Date();
@@ -451,16 +420,20 @@ function transformTables(batchIndex) {
     let selectedTArr = [];
     let batchArray = [];
 
-    // read selected tables ids from file
-    try {
-        const selectedTables = fs.readFileSync(`${extractsOutputPath}/index_list.csv`, 'utf8').split('\n');
-        // remove last item (empty item generated from split)
-        selectedTables.pop();
-        selectedTArr = selectedTables.map(line => line.split(';')[0].replace(/"/g, '')).slice(1);
-        console.log(`@transformTables :: table IDs are ready for ${selectedTArr.length} tables\n`);
-
-    } catch (e) {
-        console.log('Error: ', e.stack);
+    // if no tables list is provided
+    if (tablesList.length === 0) {
+        // read selected tables ids from file
+        try {
+            const selectedTables = fs.readFileSync(`${extractsOutputPath}/index_list.csv`, 'utf8').split('\n');
+            // remove last item (empty item generated from split)
+            selectedTables.pop();
+            selectedTArr = selectedTables.map(line => line.split(';')[0].replace(/"/g, '')).slice(1);
+            console.log(`@transformTables :: table IDs are ready for ${selectedTArr.length} tables\n`);
+        } catch (e) {
+            console.log('Error: ', e.stack);
+        }
+    } else {
+        selectedTArr = tablesList;
     }
 
     // create batch array
@@ -478,13 +451,14 @@ function transformTables(batchIndex) {
         returnObj.index = index;
 
         const fileName = `????-??-??_*_${tableId}.csv`;
+        const sourcePath = `${extractsOutputPath}/${countyId}`;
         // test if file exists
-        if (glob.sync(fileName, { cwd: csvOutputPath }).length > 0) {
+        if (glob.sync(fileName, { cwd: sourcePath }).length > 0) {
             console.log(`file ${index} found`);
 
             // get actual filename
             const currentFileName = glob.sync(fileName, { cwd: csvOutputPath })[0];
-            const currentFilePath = csvOutputPath + currentFileName;
+            const currentFilePath = `${sourcePath}/${currentFileName}`;
             console.log(`${index} :: ${currentFileName}: START`);
 
             // first stage processing
@@ -507,7 +481,7 @@ function transformTables(batchIndex) {
             returnObj.valoareIndex = headerInfo.valoareIndex;
 
             console.log(`${index} :: ${currentFileName} : headerInfo aquired`);
-            // console.log(`${index} :: ${returnObj.timesArr}`);
+            console.log(`${index} :: timesArr >>> ${returnObj.timesArr}`);
 
             // create new header
             // insert cells before time instance
@@ -515,10 +489,10 @@ function transformTables(batchIndex) {
             if (returnObj.perioadeIndex === -1
                 && returnObj.trimestreIndex === -1
                 && returnObj.luniIndex === -1) {
-                returnObj.newHeader = returnObj.oldHeader.slice(0, returnObj.aniIndex + 1);
+                returnObj.newHeader = returnObj.oldHeader.slice(0, returnObj.aniIndex);
             // if time is represented in 'Perioade' || 'Trimestre' || 'Luni' and 'Ani'
             } else {
-                returnObj.newHeader = returnObj.oldHeader.slice(0, returnObj.aniIndex);
+                returnObj.newHeader = returnObj.oldHeader.slice(0, returnObj.aniIndex - 1);
             }
             // insert time array
             returnObj.newHeader = returnObj.newHeader.concat(returnObj.timesArr);
@@ -548,7 +522,7 @@ function transformTables(batchIndex) {
 
         // for each item in array
         result.forEach((headerInfo) => {
-            transformTable(headerInfo);
+            transformTable(headerInfo, countyId);
         });
     }).catch((error) => {
         console.log(error.message);
@@ -571,15 +545,30 @@ function main() {
  2. -e or --extract : extract desired counties (SJ, SV, TL) in separate folders and files (folders must be created manually)\n\
  3. -t or --transform : refactor tables to display data in one line, each time instance becomes a header column\n\
     (destination folder must be created manually)\n\
-    + can also accept additional argument [0:8], defaults to 0\n\
+    + can also accept additional argument [0:8] or table id, defaults to 0\n\
           0    process all files\n\
           1-8  process Nth batch of 10-12 tables\n\
+          GOS102A\n\
     ';
 
     // get third command line argument
     const argument = process.argv[2] || '--help';
-    const batchArg = process.argv[3] || 0;
+    let batchArg = 0;
+    const tableIds = [];
+    if (process.argv[3] && process.argv[3].length === 1) {
+        batchArg = process.argv[3];
+    } else if (process.argv[3].length > 5) {
+        tableIds.push(process.argv[3]);
+    }
+
     console.log('\x1b[34m%s\x1b[0m', `\n@uploadTables >>>>>>> ${argument} + ${batchArg}`);
+
+    // set extracts
+    const exTable = [
+        { name: 'Suceava', code: 'SV' },
+        { name: 'Salaj', code: 'SJ' },
+        { name: 'Tulcea', code: 'TL' },
+    ];
 
     // run requested command
     // 1. if argument is 'h' or 'help' print available commands
@@ -588,19 +577,22 @@ function main() {
 
     // 2. else if argument is 'e' or 'extract', check which tables have 'luni' for time column
     } else if (argument === '-e' || argument === '--extract') {
-        // read table headers from file
-        extractCounties();
+        // extract counties from the localities level tables
+        extractCounties(exTable);
 
     // 3. refactor tables: create columns from time instances
     } else if (argument === '-t' || argument === '--transform') {
-        // read table headers from file
-        transformTables(batchArg);
-    
-    // 4. extract POP107D data for given counties (SV, SJ, TL)
-    // save new data into POP107D_
-    } else if (argument === '-ex' || argument === '--extractone') {
-        // read table headers from file
-        extractOneCounty('POP107D');
+        // if (process.argv[3].length === 2) {
+        //     batchArg = process.argv[3];
+        // } else if (process.argv[3].length > 5) {
+        //     tableIds.push(process.argv[3]);
+        // }
+        // transform tables from counties extracted files
+        exTable.forEach((item) => {
+            console.log(`batchArg = ${batchArg}; countyId = ${item.code}; tableIds = ${tableIds}`);
+            transformTables(batchArg, item.code, tableIds);
+        });
+        // transformTables(batchArg, 'SV');
 
     // else print help
     } else {
