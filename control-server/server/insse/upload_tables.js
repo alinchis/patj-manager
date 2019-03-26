@@ -363,7 +363,7 @@ function transformTable(headerInfo, countyId) {
 
                 // if current line item is new
                 if (headerItem === currentItem) {
-                    // console.log(`\n${headerInfo.index}: ${headerInfo.tableId} >>> item ${index}/${headerInfo.itemsArr.length} :: @transform loop line ${lineCounter}/${headerInfo.lineCounter}`);
+                    console.log(`\n${headerInfo.tableId} >>> item ${index}/${headerInfo.itemsArr.length} :: @transform loop line ${lineCounter}/${headerInfo.lineCounter}`);
                     // increase values counter
                     valuesCounter += 1;
                     // console.log(`${headerInfo.index}: ${headerInfo.tableId} >>> item ${index}/${headerInfo.itemsArr.length} :: values ${valuesCounter}/${headerInfo.timesArr.length}`);
@@ -459,7 +459,8 @@ function transformTables(batchIndex, countyId, tablesList = []) {
             // get actual filename
             const currentFileName = glob.sync(fileName, { cwd: csvOutputPath })[0];
             const currentFilePath = `${sourcePath}/${currentFileName}`;
-            console.log(`${index} :: ${currentFileName}: START`);
+            console.log(`${tableId} :: ${currentFileName}`);
+            console.log(`${tableId} :: ${currentFilePath}`);
 
             // first stage processing
             // create array of time instances
@@ -538,6 +539,7 @@ function transformTables(batchIndex, countyId, tablesList = []) {
 // // MAIN FUNCTION
 
 function main() {
+    console.log(process.argv);
 
     // help text
     const helpText = '\n Available commands:\n\n\
@@ -549,19 +551,9 @@ function main() {
           0    process all files\n\
           1-8  process Nth batch of 10-12 tables\n\
           GOS102A\n\
+    + can also accept additional argument county id, defaults to all\n\
+          SV\n\
     ';
-
-    // get third command line argument
-    const argument = process.argv[2] || '--help';
-    let batchArg = 0;
-    const tableIds = [];
-    if (process.argv[3] && process.argv[3].length === 1) {
-        batchArg = process.argv[3];
-    } else if (process.argv[3].length > 5) {
-        tableIds.push(process.argv[3]);
-    }
-
-    console.log('\x1b[34m%s\x1b[0m', `\n@uploadTables >>>>>>> ${argument} + ${batchArg}`);
 
     // set extracts
     const exTable = [
@@ -569,6 +561,30 @@ function main() {
         { name: 'Salaj', code: 'SJ' },
         { name: 'Tulcea', code: 'TL' },
     ];
+    const ctyIds = [
+        'SV',
+        'SJ',
+        'TL',
+    ];
+
+    // get third command line argument
+    const argument = process.argv[2] || '--help';
+    let batchArg = 0;
+    const tableIds = [];
+    let countiesIds = [];
+
+    if (process.argv[3] && process.argv[3].length === 1) {
+        batchArg = process.argv[3];
+    } else if (process.argv[3] && process.argv[3].length > 5) {
+        tableIds.push(process.argv[3]);
+        if (process.argv[4] || ctyIds.includes(process.argv[4])) {
+            countiesIds.push(process.argv[4]);
+        } else {
+            countiesIds = ctyIds;
+        }
+    }
+
+    console.log('\x1b[34m%s\x1b[0m', `\n@uploadTables >>>>>>> ${argument} + ${batchArg}`);
 
     // run requested command
     // 1. if argument is 'h' or 'help' print available commands
@@ -588,11 +604,13 @@ function main() {
         //     tableIds.push(process.argv[3]);
         // }
         // transform tables from counties extracted files
-        exTable.forEach((item) => {
-            console.log(`batchArg = ${batchArg}; countyId = ${item.code}; tableIds = ${tableIds}`);
-            transformTables(batchArg, item.code, tableIds);
+        countiesIds.forEach((item) => {
+            console.log(`batchArg = ${batchArg}; countyId = ${item}; tableIds = ${tableIds}`);
+            transformTables(batchArg, item, tableIds);
         });
-        // transformTables(batchArg, 'SV');
+        // transformTables(batchArg, 'SV', tableIds);
+        // transformTables(batchArg, 'SJ', tableIds);
+        // transformTables(batchArg, 'TL', tableIds);
 
     // else print help
     } else {
