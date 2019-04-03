@@ -73,32 +73,30 @@ class RO_SIRUTA_localities {
       .split('\n')
       // remove header row
       .splice(1)
+      // filter out empty rows
+      .filter(line => line !== '')
       .map((line) => {
-        // avoid empty lines
-        if (line !== '') {
-          const record = line.split(delimiter);
-          // console.log('@line: ', record);
-          return {
-            code_siruta: record[0],
-            name_ro: record[1],
-            name_en: record[2],
-            code_postal: record[3],
-            county_id: record[4],
-            code_siruta_sup: record[5],
-            code_type: record[6],
-            code_level: record[7],
-            code_med: record[8],
-            region_id: record[9],
-            code_fsj: record[10],
-            code_fs2: record[11],
-            code_fs3: record[12],
-            code_fsl: record[13],
-            rank: record[14],
-            fictional: record[15],
-          };
-        }
-      })
-      .filter(line => line);
+        const record = line.split(delimiter);
+        // console.log('@line: ', record);
+        return {
+          code_siruta: record[0],
+          name_ro: record[1],
+          name_en: record[2],
+          code_postal: record[3],
+          county_id: record[4],
+          code_siruta_sup: record[5],
+          code_type: record[6],
+          code_level: record[7],
+          code_med: record[8],
+          region_id: record[9],
+          code_fsj: record[10],
+          code_fs2: record[11],
+          code_fs3: record[12],
+          code_fsl: record[13],
+          rank: record[14],
+          fictional: record[15],
+        };
+      });
   }
 
   // GET::LOCAL UAT list of included localities for given code_siruta

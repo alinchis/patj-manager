@@ -5,6 +5,7 @@
 import Regions from '../controllers/ro_siruta_region';
 import Counties from '../controllers/ro_siruta_county';
 import Localities from '../controllers/ro_siruta_locality';
+import Geographies from '../controllers/tempo_geography';
 // import POP_dom_SV_107Ds from '../controllers/pop_dom_sv_107d';
 import LatexFile from '../latex';
 // // import Tempo from '../insse';
@@ -45,6 +46,14 @@ router.get('/localities/clear', Localities.clear);
 router.get('/localities/uploadCSV', Localities.uploadCSV);
 // GET all records from Localities
 router.get('/localities/list', Localities.list);
+
+// // TEMPO::Geography - simplified version of SIRUTA:Localities
+// GET clear all data from Geography Table
+router.get('/geographies/clear', Geographies.clear);
+// UPLOAD CSV file to DB
+router.get('/geographies/uploadCSV', Geographies.uploadCSV);
+// GET all records from Geography Table
+router.get('/geographies/list', Geographies.list);
 
 // GET all UAT from County
 router.get('/:sirutaSup/uat', Localities.UATlist);
