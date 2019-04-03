@@ -4,7 +4,7 @@ export default (sequelize, DataTypes) => {
     parent_id: {
       type: DataTypes.INTEGER,
       references: {
-        model: 'tempo_header_lvl3',
+        model: 'tempo_chapter',
         key: 'id',
         as: 'parent_id',
       }
@@ -63,7 +63,7 @@ export default (sequelize, DataTypes) => {
   }, {});
   tempo_table.associate = (models) => {
     // associations can be defined here
-    tempo_table.belongsTo(models.tempo_header_lvl3, {
+    tempo_table.belongsTo(models.tempo_chapter, {
       foreignKey: 'parent_id',
     })
   };

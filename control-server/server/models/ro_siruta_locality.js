@@ -5,21 +5,21 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: {
         args: false,
-        msg: 'Attribute code_siruta is missing'
+        msg: 'Attribute code_siruta is missing',
       }
     },
     name_ro: {
       type: DataTypes.STRING,
       allowNull: {
         args: false,
-        msg: 'Attribute name_ro is missing'
+        msg: 'Attribute name_ro is missing',
       }
     },
     name_en: {
       type: DataTypes.STRING,
       allowNull: {
         args: false,
-        msg: 'Attribute name_en is missing'
+        msg: 'Attribute name_en is missing',
       }
     },
     code_postal: {
@@ -90,13 +90,13 @@ export default (sequelize, DataTypes) => {
   RO_SIRUTA_locality.associate = (models) => {
     // associations can be defined here
     RO_SIRUTA_locality.belongsTo(models.RO_SIRUTA_county, {
-      foreignKey: 'county_id'
+      foreignKey: 'county_id',
     });
     RO_SIRUTA_locality.belongsTo(models.RO_SIRUTA_region, {
-      foreignKey: 'region_id'
+      foreignKey: 'region_id',
     });
     RO_SIRUTA_locality.belongsTo(models.pop_dom_SV_107D, {
-      foreignKey: 'code_siruta'
+      foreignKey: 'code_siruta',
     });
   };
   return RO_SIRUTA_locality;

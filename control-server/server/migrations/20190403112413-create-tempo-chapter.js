@@ -1,12 +1,21 @@
 'use strict';
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable('tempo_headers_lvl3', {
+    return queryInterface.createTable('tempo_chapters', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
+      },
+      parent_code: {
+        type: Sequelize.INTEGER
+      },
+      level: {
+        type: Sequelize.INTEGER
+      },
+      index: {
+        type: Sequelize.STRING
       },
       name: {
         type: Sequelize.STRING
@@ -14,8 +23,14 @@ module.exports = {
       code: {
         type: Sequelize.INTEGER
       },
-      parent_id: {
-        type: Sequelize.INTEGER
+      childrenUrl: {
+        type: Sequelize.STRING
+      },
+      comment: {
+        type: Sequelize.STRING
+      },
+      url: {
+        type: Sequelize.STRING
       },
       createdAt: {
         allowNull: false,
@@ -28,6 +43,6 @@ module.exports = {
     });
   },
   down: (queryInterface, Sequelize) => {
-    return queryInterface.dropTable('tempo_headers_lvl3');
+    return queryInterface.dropTable('tempo_chapters');
   }
 };
