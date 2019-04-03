@@ -12,8 +12,8 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       references: {
         model: 'tempo_geography',
-        key: 'siruta',
-        as: 'parent_siruta',
+        key: 'code_siruta',
+        as: 'code_siruta_sup',
       }
     },
     name_ro: {
@@ -34,7 +34,7 @@ export default (sequelize, DataTypes) => {
   tempo_geography.associate = (models) => {
     // associations can be defined here
     tempo_geography.belongsTo(models.tempo_geography, {
-      foreignKey: 'siruta',
+      foreignKey: 'code_siruta',
     });
   };
   return tempo_geography;

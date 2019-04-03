@@ -136,6 +136,17 @@ class tempo_geographies {
                 success: false,
                 message: err,
             }));
+        // raw sql alternative
+        // return model.sequelize.query('SELECT * FROM public."tempo_geographies"')
+        //     .spread((results, metadata) => {
+        //         // Results will be an empty array and metadata will contain the number of affected rows.
+        //         res.status(200)
+        //             .json({
+        //                 status: metadata,
+        //                 data: results,
+        //                 message: 'Table items',
+        //             });
+        //     });
     }
 
     // GET::CLIENT all UAT from given County via county_id
