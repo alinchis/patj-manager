@@ -4,10 +4,10 @@
 
 // import libraries
 const fs = require('fs');
-const { once } = require('events');
-const axios = require('axios');
+// const { once } = require('events');
+// const axios = require('axios');
 // const logger = require('../../node_modules/morgan/index');
-const cheerio = require('cheerio');
+// const cheerio = require('cheerio');
 // library to format time
 const dateFormat = require('dateformat');
 const glob = require('glob');
@@ -284,126 +284,120 @@ function transformTable(headerInfo, countyId) {
     // write new header to file
     outStream.write(`${headerInfo.newHeader.join(';')}\n`);
 
-    // for each new item parse entire table
-    headerInfo.itemsArr.forEach(async (headerItem, index) => {
-    // for (let index = 0; index < headerInfo.itemsArr.length; index += 1) {
-        // const headerItem = headerInfo.itemsArr[index];
-        console.log(`${index} :: @transform ${headerItem}`);
-
-        // create read stream
-        const inStream = readline.createInterface({
-            input: fs.createReadStream(`${extractsOutputPath}/${countyId}/${headerInfo.fileName}`),
-            crlfDelay: Infinity,
-            // output: process.stdout,
-        });
-
-        // create values array
-        // rStorage.set(headerItem, '');
-        const timeValues = [];
-        for (let i = 0; i < headerInfo.timesArr.length; i += 1) {
-            timeValues.push('');
-        }
-
-        // set markers
-        let lineCounter = 0;
-        let valuesCounter = 0;
-        let currentUM = '';
-
-        console.log(`${index} :: @transform ${headerItem} >>> start for loop\n`);
-        // parse each line
-        // for await (const line of inStream) {
-        inStream.on('line', (line) => {
-            lineCounter += 1;
-            if (!lineFlagArray.includes(lineCounter)) {
-                // console.log(`${headerInfo.index}: ${headerInfo.tableId} >>> item ${index}/${headerInfo.itemsArr.length} :: @transform loop line ${lineCounter}/${headerInfo.lineCounter}\n`);
-
-                // break line into array
-                const lineArr = line.replace('\n', '').split(';');
-
-                // create items
-                let currentItem = '';
-                let currentTime = '';
-                let currentTimeIndex = '';
-                // console.log(`${headerInfo.perioadeIndex} :: ${headerInfo.luniIndex} :: ${headerInfo.trimestreIndex}`);
-
-                // if header row
-                if (lineCounter <= 1) return;
-                // if normal row
-                // if time is represented only in 'Ani'
-                if (headerInfo.perioadeIndex === -1
-                    && headerInfo.luniIndex === -1
-                    && headerInfo.trimestreIndex === -1) {
-                    currentItem = lineArr.slice(0, headerInfo.aniIndex).join(';');
-                    currentTime = lineArr[headerInfo.aniIndex];
-                    currentTimeIndex = headerInfo.timesArr.indexOf(currentTime);
-
-                // if time is represented in 'Perioade' and 'Ani'
-                } else if (headerInfo.perioadeIndex !== -1) {
-                    currentItem = lineArr.slice(0, headerInfo.perioadeIndex).join(';');
-                    currentTime = `"${lineArr[headerInfo.perioadeIndex].replace(/"/g, '')} ${lineArr[headerInfo.aniIndex].replace(/"/g, '')}"`;
-                    currentTimeIndex = headerInfo.timesArr.indexOf(currentTime);
-
-                // if time is represented in 'Trimestre' and 'Ani'
-                } else if (headerInfo.trimestreIndex !== -1) {
-                    currentItem = lineArr.slice(0, headerInfo.trimestreIndex).join(';');
-                    currentTime = `"${lineArr[headerInfo.trimestreIndex].replace(/"/g, '')} ${lineArr[headerInfo.aniIndex].replace(/"/g, '')}"`;
-                    currentTimeIndex = headerInfo.timesArr.indexOf(currentTime);
-
-                // if time is represented in 'Luni' and 'Ani'
-                } else if (headerInfo.luniIndex !== -1) {
-                    currentItem = lineArr.slice(0, headerInfo.luniIndex).join(';');
-                    currentTime = `"${lineArr[headerInfo.luniIndex].replace(/"/g, '')} ${lineArr[headerInfo.aniIndex].replace(/"/g, '')}"`;
-                    currentTimeIndex = headerInfo.timesArr.indexOf(currentTime);
-                }
-
-                // console.log(`${headerInfo.index}: ${headerInfo.tableId} >>> item ${index}/${headerInfo.itemsArr.length} :: @transform loop line ${lineCounter}/${headerInfo.lineCounter}`);
-                // console.log(`current item: ${currentItem}\n`);
-                // console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
-                // console.log(`current time: ${currentTime}\n`);
-
-                // if current line item is new
-                if (headerItem === currentItem) {
-                    console.log(`\n${headerInfo.tableId} >>> item ${index}/${headerInfo.itemsArr.length} :: @transform loop line ${lineCounter}/${headerInfo.lineCounter}`);
-                    // increase values counter
-                    valuesCounter += 1;
-                    // console.log(`${headerInfo.index}: ${headerInfo.tableId} >>> item ${index}/${headerInfo.itemsArr.length} :: values ${valuesCounter}/${headerInfo.timesArr.length}`);
-                    // add new line index to array
-                    lineFlagArray.push(lineCounter);
-
-                    // add new value to value array
-                    timeValues[currentTimeIndex] = lineArr[headerInfo.valoareIndex];
-
-                    // update current um
-                    currentUM = lineArr[headerInfo.umIndex];
-                }
-
-                // if we found all values for one item, close stream
-                if (valuesCounter === headerInfo.timesArr.length || lineCounter === headerInfo.lineCounter) {
-                    console.log(`\n${headerItem} :: done!`);
-                    console.log(`${timeValues.join()}\n`);
-                    // outStream.write(`${headerItem};${timeValues.join(';')};${currentUM}\n`);
-                    inStream.close();
-                }
-            }
-        });
-
-        inStream.on('error', (err) => {
-            console.log(err);
-        });
-
-        inStream.on('close', () => {
-            console.log(`${index} :: @transform ${headerItem} >>> inStream CLOSED!\n`);
-            // write line to out stream
-            outStream.write(`${headerItem};${timeValues.join(';')};${currentUM}\n`);
-            // outObj.push([headerItem, timeValues, currentUM]);
-            console.log('##############################################################');
-            // console.log(outObj);
-        });
+    // create read stream
+    const inStream = readline.createInterface({
+        input: fs.createReadStream(`${extractsOutputPath}/${countyId}/${headerInfo.fileName}`),
+        crlfDelay: Infinity,
+        // output: process.stdout,
     });
-    // }
 
-    // close write file
-    // outStream.close();
+    // create values array
+    // rStorage.set(headerItem, '');
+    const timeValues = [];
+    for (let i = 0; i < headerInfo.timesArr.length; i += 1) {
+        timeValues.push('');
+    }
+    // create values array of arrays
+    const valuesMatrix = [];
+    // create UMs array
+    const UMsArray = [];
+    for (let i = 0; i < headerInfo.itemsArr.length; i += 1) {
+        valuesMatrix[i] = [];
+        UMsArray.push('');
+        for (let j = 0; j < headerInfo.timesArr.length; j += 1) {
+            valuesMatrix[i].push('');
+        }
+    }
+
+    // set markers
+    let lineCounter = 0;
+
+    console.log(`${countyId}: ${headerInfo.tableId}:: @transform >>> start read stream\n`);
+    // parse each line
+    // for await (const line of inStream) {
+    inStream.on('line', (line) => {
+        lineCounter += 1;
+        if (!lineFlagArray.includes(lineCounter)) {
+            console.log(`\n${countyId}: ${headerInfo.tableId}:: ${lineCounter}/${headerInfo.lineCounter} >>> read line from stream\n`);
+            console.log('previous line');
+
+            // break line into array
+            const lineArr = line.replace('\n', '').split(';');
+            console.log(lineArr);
+
+            // get values
+            const currentValue = lineArr[headerInfo.valoareIndex];
+            const currentUM = lineArr[headerInfo.umIndex];
+
+            // create items
+            let currentItem = '';
+            let currentTime = '';
+            let currentTimeIndex = '';
+            // console.log(`${headerInfo.perioadeIndex} :: ${headerInfo.luniIndex} :: ${headerInfo.trimestreIndex}`);
+
+            // if header row
+            if (lineCounter <= 1) return;
+            // if normal row
+            // if time is represented only in 'Ani'
+            if (headerInfo.perioadeIndex === -1
+                && headerInfo.luniIndex === -1
+                && headerInfo.trimestreIndex === -1) {
+                currentItem = lineArr.slice(0, headerInfo.aniIndex).join(';');
+                currentTime = lineArr[headerInfo.aniIndex];
+                currentTimeIndex = headerInfo.timesArr.indexOf(currentTime);
+
+            // if time is represented in 'Perioade' and 'Ani'
+            } else if (headerInfo.perioadeIndex !== -1) {
+                currentItem = lineArr.slice(0, headerInfo.perioadeIndex).join(';');
+                currentTime = `"${lineArr[headerInfo.perioadeIndex].replace(/"/g, '')} ${lineArr[headerInfo.aniIndex].replace(/"/g, '')}"`;
+                currentTimeIndex = headerInfo.timesArr.indexOf(currentTime);
+
+            // if time is represented in 'Trimestre' and 'Ani'
+            } else if (headerInfo.trimestreIndex !== -1) {
+                currentItem = lineArr.slice(0, headerInfo.trimestreIndex).join(';');
+                currentTime = `"${lineArr[headerInfo.trimestreIndex].replace(/"/g, '')} ${lineArr[headerInfo.aniIndex].replace(/"/g, '')}"`;
+                currentTimeIndex = headerInfo.timesArr.indexOf(currentTime);
+
+            // if time is represented in 'Luni' and 'Ani'
+            } else if (headerInfo.luniIndex !== -1) {
+                currentItem = lineArr.slice(0, headerInfo.luniIndex).join(';');
+                currentTime = `"${lineArr[headerInfo.luniIndex].replace(/"/g, '')} ${lineArr[headerInfo.aniIndex].replace(/"/g, '')}"`;
+                currentTimeIndex = headerInfo.timesArr.indexOf(currentTime);
+            }
+
+            // console.log(`${headerInfo.index}: ${headerInfo.tableId} >>> item ${index}/${headerInfo.itemsArr.length} :: @transform loop line ${lineCounter}/${headerInfo.lineCounter}`);
+            console.log(`current item: ${currentItem}\n`);
+            console.log(`current time: ${currentTime}\n`);
+            console.log(`current value: ${currentValue}\n`);
+            console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n');
+
+            // get current line item index in itemsArr
+            const currentItemIndex = headerInfo.itemsArr.indexOf(currentItem);
+
+            // update values matrix
+            valuesMatrix[currentItemIndex][currentTimeIndex] = currentValue;
+            console.log(valuesMatrix[currentItemIndex].join());
+
+            // update UMs array
+            if (UMsArray[currentItemIndex] === '') UMsArray[currentItemIndex] = currentUM;
+        }
+    });
+
+    inStream.on('error', (err) => {
+        console.log(err);
+    });
+
+    inStream.on('close', () => {
+        console.log(`${countyId}: ${headerInfo.tableId}:: @transform >>> inStream CLOSED!\n`);
+        // write array to out stream
+        for (let i = 0; i < valuesMatrix.length; i += 1) {
+            const outLine = `${headerInfo.itemsArr[i]};${valuesMatrix[i].join(';')};${UMsArray[i]}`;
+            outStream.write(`${outLine}\n`);
+        }
+        // outObj.push([headerItem, timeValues, currentUM]);
+        console.log('##############################################################');
+        // console.log(outObj);
+    });
 }
 
 
@@ -417,24 +411,24 @@ function transformTables(batchIndex, countyId, tablesList = []) {
     const dbStartDate = dateFormat(dbStartTime, 'isoDate');
     console.log('\x1b[33m%s\x1b[0m', '@transformTables:: Timer started\n');
 
-    let selectedTArr = [];
+    let selectedTArr = tablesList;
     let batchArray = [];
 
-    // if no tables list is provided
-    if (tablesList.length === 0) {
-        // read selected tables ids from file
-        try {
-            const selectedTables = fs.readFileSync(`${extractsOutputPath}/index_list.csv`, 'utf8').split('\n');
-            // remove last item (empty item generated from split)
-            selectedTables.pop();
-            selectedTArr = selectedTables.map(line => line.split(';')[0].replace(/"/g, '')).slice(1);
-            console.log(`@transformTables :: table IDs are ready for ${selectedTArr.length} tables\n`);
-        } catch (e) {
-            console.log('Error: ', e.stack);
-        }
-    } else {
-        selectedTArr = tablesList;
-    }
+    // // if no tables list is provided
+    // if (tablesList.length === 0) {
+    //     // read selected tables ids from file
+    //     try {
+    //         const selectedTables = fs.readFileSync(`${extractsOutputPath}/index_list.csv`, 'utf8').split('\n');
+    //         // remove last item (empty item generated from split)
+    //         selectedTables.pop();
+    //         selectedTArr = selectedTables.map(line => line.split(';')[0].replace(/"/g, '')).slice(1);
+    //         console.log(`@transformTables :: table IDs are ready for ${selectedTArr.length} tables\n`);
+    //     } catch (e) {
+    //         console.log('Error: ', e.stack);
+    //     }
+    // } else {
+    //     selectedTArr = tablesList;
+    // }
 
     // create batch array
     if (batchIndex === 0) {
@@ -535,6 +529,151 @@ function transformTables(batchIndex, countyId, tablesList = []) {
 }
 
 
+// ///////////////////////////////////////////////////////////////////////////////////////
+// // extract locality - extract all data for requested locality
+
+async function extractLocality(countyId, localityName, localityYear) {
+    // read tables list from files
+    let selectedTArr = [];
+    try {
+        const selectedTables = fs.readFileSync(`${extractsOutputPath}/index_list.csv`, 'utf8').split('\n');
+        // remove last item (empty item generated from split)
+        selectedTables.pop();
+        selectedTArr = selectedTables.map(line => line.replace(/"/g, '').split(';')).slice(1);
+        console.log(`@transformTables :: table IDs are ready for ${selectedTArr.length} tables\n`);
+    } catch (e) {
+        console.log('Error: ', e.stack);
+    }
+
+    // open write file
+    const outFileName = `${localityYear}_${countyId}_${localityName}.csv`
+    const outStream = fs.createWriteStream(`${extractsOutputPath}/localities/${countyId}/${outFileName}`);
+
+    // write new header to file
+    const outFileHeaderArr = ['Tabel', 'Indicator', 'Diviziuni', 'Sub-Diviziuni', 'Perioada', 'UM', 'Valoare', 'Calitatea datelor'];
+    outStream.write(`${outFileHeaderArr.join(';')}\n`);
+
+    // markers
+    const tableCount = [];
+    let tableMarker = '';
+
+    for (let i = 0; i < selectedTArr.length; i += 1) {
+        const tableName = selectedTArr[i][0];
+        console.log(`current table = ${tableName}\n`);
+
+        // set marker
+        tableMarker = '';
+
+        // get fileName for given tableId
+        const fileName = `????-??-??_*_${tableName}.csv`;
+        // test if file exists
+        if (glob.sync(fileName, { cwd: csvOutputPath }).length > 0) {
+            console.log(`file ${tableName} found`);
+
+            // get actual filename
+            const currentFileName = glob.sync(fileName, { cwd: csvOutputPath })[0];
+            const currentFilePath = `${extractsOutputPath}/${countyId}/${currentFileName}`;
+            console.log(`${i} :: ${currentFileName}: START`);
+
+            // open stream for read
+            const inStream = readline.createInterface({
+                input: fs.createReadStream(currentFilePath),
+                crlfDelay: Infinity,
+                // output: process.stdout,
+            });
+
+            // set markers
+            let lineCounter = 0;
+            let judeteIndex = -1;
+            let luniIndex = -1;
+            let perioadeIndex = -1;
+            let trimestreIndex = -1;
+            let aniIndex = -1;
+            let umIndex = -1;
+            let valoareIndex = -1;
+
+            // read file line-by-line
+            for await (line of inStream) {
+                lineCounter += 1;
+                // console.log(`${tableName}:: ${lineCounter} >>> ${line}`);
+
+                // break line into array
+                const lineArrRaw = line.replace('\n', '').split(';');
+                const lineArr = line.toLowerCase().replace('\n', '').split(';');
+                // console.log('\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
+
+                // header item
+                if (lineCounter === 1) {
+                    // console.log(lineArr);
+                    judeteIndex = lineArr.indexOf('judete');
+                    perioadeIndex = lineArr.indexOf('perioade');
+                    trimestreIndex = lineArr.indexOf('trimestre');
+                    luniIndex = lineArr.indexOf('luni');
+                    aniIndex = lineArr.indexOf('ani');
+                    umIndex = aniIndex + 1;
+                    valoareIndex = umIndex + 1;
+                // lines
+                } else if (lineArr.includes(`"${localityName.toLowerCase()}"`) && lineArrRaw[aniIndex] === `"${localityYear}"`) {
+                    // console.log('\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
+                    // update marker
+                    tableMarker = i;
+                    // build index sub-divisions elements
+                    let divisions1 = '';
+                    let divisions2 = '';
+                    console.log(`judete index = ${judeteIndex}`);
+                    if (judeteIndex === 1) {
+                        divisions1 = lineArrRaw[0];
+                    } else if (judeteIndex === 2) {
+                        divisions1 = lineArrRaw[0];
+                        divisions2 = lineArrRaw[1];
+                    } else if (judeteIndex > 2) {
+                        divisions1 = divisions2 = 'ERROR!!!';
+                    }
+                    // build time element
+                    const timeValue = lineArrRaw[perioadeIndex] || lineArrRaw[trimestreIndex] || lineArrRaw[luniIndex] || '"anual"';
+                    // build um element
+                    const umValue = lineArrRaw[umIndex];
+                    // build value element
+                    const valValue = lineArrRaw[valoareIndex];
+                    // build quality element
+                    const qltyValue = lineArrRaw[valoareIndex + 1];
+                    // build new line
+                    const newLine = `"${selectedTArr[i][0]}";"${selectedTArr[i][1]}";${divisions1};${divisions2};${timeValue};${umValue};${valValue};${qltyValue}`;
+                    // write new line to file
+                    outStream.write(`${newLine}\n`);
+                    console.log(`${lineCounter}: ${newLine}`);
+                }
+                // console.log(lineArr);
+            }
+            inStream.on('error', (err) => {
+                console.log(err);
+            });
+        } else {
+            console.log(`file ${tableName} NOT fund!`);
+        }
+        // update table marker count
+        tableCount.push(tableMarker);
+    }
+    // print marker
+    console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
+    for (let j = 0; j < tableCount.length; j += 1) {
+        console.log(`${tableCount[j]}: ${selectedTArr[j][0]}`);
+    }
+}
+
+
+// ////////////////////////////////////////////////////////////////////////////
+// // create and upload tempo_geography
+
+function uploadGeography() {
+    // create table to hold data
+    const dataTable = [];
+
+    // create header
+    const dataHeader = ['siruta', 'siruta_sup', 'name_ro', 'name_en'];
+}
+
+
 // ////////////////////////////////////////////////////////////////////////////
 // // MAIN FUNCTION
 
@@ -543,9 +682,9 @@ function main() {
 
     // help text
     const helpText = '\n Available commands:\n\n\
- 1. -h or --help : display help text\n\
- 2. -e or --extract : extract desired counties (SJ, SV, TL) in separate folders and files (folders must be created manually)\n\
- 3. -t or --transform : refactor tables to display data in one line, each time instance becomes a header column\n\
+ 1. -h : display help text\n\
+ 2. -e : extract desired counties (SJ, SV, TL) in separate folders and files (folders must be created manually)\n\
+ 3. -t : refactor tables to display data in one line, each time instance becomes a header column\n\
     (destination folder must be created manually)\n\
     + can also accept additional argument [0:8] or table id, defaults to 0\n\
           0    process all files\n\
@@ -588,30 +727,56 @@ function main() {
 
     // run requested command
     // 1. if argument is 'h' or 'help' print available commands
-    if (argument === '-h' || argument === '--help') {
+    if (argument === '-h') {
         console.log(helpText);
 
     // 2. else if argument is 'e' or 'extract', check which tables have 'luni' for time column
-    } else if (argument === '-e' || argument === '--extract') {
+    } else if (argument === '-e') {
         // extract counties from the localities level tables
         extractCounties(exTable);
 
     // 3. refactor tables: create columns from time instances
-    } else if (argument === '-t' || argument === '--transform') {
-        // if (process.argv[3].length === 2) {
-        //     batchArg = process.argv[3];
-        // } else if (process.argv[3].length > 5) {
-        //     tableIds.push(process.argv[3]);
-        // }
-        // transform tables from counties extracted files
-        countiesIds.forEach((item) => {
-            console.log(`batchArg = ${batchArg}; countyId = ${item}; tableIds = ${tableIds}`);
-            transformTables(batchArg, item, tableIds);
+    } else if (argument === '-t') {
+
+        // if no tables list is provided
+        let selectedTArr = [];
+        if (tableIds.length === 0) {
+            // read selected tables ids from file
+            try {
+                const selectedTables = fs.readFileSync(`${extractsOutputPath}/index_list.csv`, 'utf8').split('\n');
+                // remove last item (empty item generated from split)
+                selectedTables.pop();
+                selectedTArr = selectedTables.map(line => line.split(';')[0].replace(/"/g, '')).slice(1);
+                console.log(`@transformTables :: table IDs are ready for ${selectedTArr.length} tables\n`);
+            } catch (e) {
+                console.log('Error: ', e.stack);
+            }
+        } else {
+            selectedTArr = tableIds;
+        }
+
+        console.log(`tableIds = ${selectedTArr.length}`);
+        selectedTArr.forEach((tableId) => {
+            // transform tables from counties extracted files
+            ctyIds.forEach((item) => {
+                console.log(`batchArg = ${batchArg}; countyId = ${item}; tableIds.length = ${tableId}`);
+                transformTables(batchArg, item, tableId);
+            });
         });
+
         // transformTables(batchArg, 'SV', tableIds);
         // transformTables(batchArg, 'SJ', tableIds);
         // transformTables(batchArg, 'TL', tableIds);
 
+    // 4. extract all data for one locality for one year
+    } else if (argument === '-e1') {
+        console.log('extract all data for one table');
+        extractLocality('SV', 'Municipiul Suceava', '2011');
+
+    // 5. create table tempo_geography
+    } else if (argument === '-u1') {
+        console.log('tempo_geography:: START\n');
+        uploadGeography();
     // else print help
     } else {
         console.log(helpText);

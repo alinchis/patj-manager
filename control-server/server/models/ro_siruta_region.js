@@ -1,4 +1,3 @@
-'use strict';
 
 export default (sequelize, DataTypes) => {
   const RO_SIRUTA_region = sequelize.define('RO_SIRUTA_region', {

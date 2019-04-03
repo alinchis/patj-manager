@@ -32,7 +32,7 @@ function uploadTable(table, tableName) {
 		fs.readFileSync(filePath)
 			.toString()
 			.split('\n')
-			.map((line, index) => {
+			.forEach((line, index) => {
 				// avoid empty lines and header
 				if (line !== '' && index > 0) {
 					const record = line.split(';');

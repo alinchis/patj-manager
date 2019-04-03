@@ -105,7 +105,7 @@ function groupColumnItems(column, parenthood, limit) {
     const lenghtsArr = returnArr.values.map(item => item.length);
     newLimit = Math.floor(limit / Math.max(...lenghtsArr));
 
-  // if column has parent items
+    // if column has parent items
   } else if (parenthood) {
     console.log('\x1b[36m%s\x1b[0m', '@group:: parent branch');
     returnArr.type = 'parents';
@@ -116,14 +116,14 @@ function groupColumnItems(column, parenthood, limit) {
     // one item array does not influence the limit, return same limit
     newLimit = limit;
 
-  // if column has regular items
-  // // if query limit has been reached, group elements in one items arrays
+    // if column has regular items
+    // // if query limit has been reached, group elements in one items arrays
   } else if (limit === 0) {
     console.log('\x1b[36m%s\x1b[0m', '@group:: limit === 0 branch');
     returnArr.values = workColumn.map(item => [item]);
     // console.log(returnArr.values);
 
-  // // if query limit is not reached, make one array with all items
+    // // if query limit is not reached, make one array with all items
   } else if (limit > column.length) {
     console.log('\x1b[36m%s\x1b[0m', '@group:: limit > column.length branch');
     // a column selection can hold max 500 items
@@ -137,7 +137,7 @@ function groupColumnItems(column, parenthood, limit) {
       newLimit = Math.floor(limit / column.length);
     }
 
-  // // if query limit is not reached, but is smaller than the amount of items
+    // // if query limit is not reached, but is smaller than the amount of items
   } else if (limit < column.length) {
     console.log('\x1b[36m%s\x1b[0m', '@group:: limit < column.length branch');
     // a column selection can hold max 500 items
@@ -190,10 +190,10 @@ function buildPermutations(columns, limit) {
     // // if current items are children set parenthood to true
     if (groupedColumn.returnArr.type === 'children') {
       parenthood = true;
-    // // if current items are parents of parents
+      // // if current items are parents of parents
     } else if (groupedColumn.returnArr.type === 'parents' && groupedColumn.returnArr.dependent) {
       parenthood = true;
-    // // if current items have no dependency
+      // // if current items have no dependency
     } else {
       parenthood = false;
     }
@@ -234,7 +234,7 @@ function buildPermutations(columns, limit) {
           }
         });
 
-      // // if last column were children
+        // // if last column were children
       } else if (typeArray[typeArray.length - 2] === 'children') {
         console.log('\n@build:: parents branch <<<<< children');
         // console.log(permutations);
@@ -259,7 +259,7 @@ function buildPermutations(columns, limit) {
           // console.log('parent: ', parent);
           if (parent[0].label.trim().toLowerCase() === 'total' && children.length > 0) {
             // do nothing, total parents can have only total children
-          // // else, if total permutation is not null
+            // // else, if total permutation is not null
           } else if (totalPermutation.length > 0) {
             // add parent and total permutation pair
             // console.log(totalPermutation);
@@ -269,7 +269,7 @@ function buildPermutations(columns, limit) {
         });
       }
 
-    // column contains children
+      // column contains children
     } else if (groupedColumn.returnArr.type === 'children') {
       // if first column
       if (permutations.length > 0) {
@@ -293,7 +293,7 @@ function buildPermutations(columns, limit) {
         });
       }
 
-    // column contains regular items
+      // column contains regular items
     } else {
       // if first column
       if (permutations.length > 0) {
@@ -441,7 +441,7 @@ function html2array(tablePrefix, tableName, tableType, headerFlag, tableHead, ye
 
         // add quality header
         tableHeader.push('Calitatea datelor');
-      // console.log(tableHeader);
+        // console.log(tableHeader);
       }
 
       // get year column
@@ -456,7 +456,7 @@ function html2array(tablePrefix, tableName, tableType, headerFlag, tableHead, ye
 
       // for each table row, except titles and info, parse data
       $(trArray)
-      // remove sub-header and footer rows
+        // remove sub-header and footer rows
         .filter((i, row) => $(row).children().length > 1)
         // remove header rows
         .slice(1)
@@ -472,10 +472,10 @@ function html2array(tablePrefix, tableName, tableType, headerFlag, tableHead, ye
               if (rowItem !== '-') {
                 rowArr.push(rowItem);
 
-              // if text is missing, copy from previous row
+                // if text is missing, copy from previous row
               } else if (tableArr.length > 0) {
                 rowArr.push(tableArr[tableArr.length - 1][j]);
-              // if first row, copy from header
+                // if first row, copy from header
               } else {
                 rowArr.push(tableHeader[j]);
               }
@@ -553,7 +553,7 @@ function html2array(tablePrefix, tableName, tableType, headerFlag, tableHead, ye
 
         // add quality header
         tableHeader.push('Calitatea datelor');
-      // console.log(tableHeader);
+        // console.log(tableHeader);
       }
 
       // get year column
@@ -628,7 +628,7 @@ function html2array(tablePrefix, tableName, tableType, headerFlag, tableHead, ye
 
       // for each table row, except titles and info, parse data
       $(trArray)
-      // remove sub-header and footer rows
+        // remove sub-header and footer rows
         .filter((i, row) => $(row).children().length > 1)
         // remove header rows
         .slice(1)
@@ -685,8 +685,8 @@ function html2array(tablePrefix, tableName, tableType, headerFlag, tableHead, ye
     }
 
 
-  // //////////////////////////////////////////////////////////
-  // if table has more than one data column
+    // //////////////////////////////////////////////////////////
+    // if table has more than one data column
   } else {
 
     // ////////////////////////////////////
@@ -712,7 +712,7 @@ function html2array(tablePrefix, tableName, tableType, headerFlag, tableHead, ye
 
         // add quality header
         tableHeader.push('Calitatea datelor');
-      // console.log(tableHeader);
+        // console.log(tableHeader);
       }
 
       // get UMs column
@@ -731,7 +731,7 @@ function html2array(tablePrefix, tableName, tableType, headerFlag, tableHead, ye
 
       // for each table row, except titles and info, parse data
       $(trArray)
-      // remove sub-header and footer rows
+        // remove sub-header and footer rows
         .filter((i, row) => $(row).children().length > 1)
         // remove header rows
         .slice(3)
@@ -747,10 +747,10 @@ function html2array(tablePrefix, tableName, tableType, headerFlag, tableHead, ye
               if (rowItem !== '-') {
                 rowArr.push(rowItem);
 
-              // if text is missing, copy from previous row
+                // if text is missing, copy from previous row
               } else if (tableArr.length > 0) {
                 rowArr.push(tableArr[tableArr.length - 1][j]);
-              // if first row, copy from header
+                // if first row, copy from header
               } else {
                 rowArr.push(tableHeader[j]);
               }
@@ -830,7 +830,7 @@ function html2array(tablePrefix, tableName, tableType, headerFlag, tableHead, ye
         $(trArray).eq(1)
           .children()
           .each((i, headerItem) => { tableHeader.push($(headerItem).text()); });
-      // console.log(tableHeader);
+        // console.log(tableHeader);
       }
 
       // reverse header ([UM, Ani] => [Ani, UM])
@@ -910,7 +910,7 @@ function html2array(tablePrefix, tableName, tableType, headerFlag, tableHead, ye
 
       // for each table row, except titles and info, parse data
       $(trArray)
-      // remove sub-header and footer rows
+        // remove sub-header and footer rows
         .filter((i, row) => $(row).children().length > 1)
         // remove header rows
         .slice(1)
@@ -1036,7 +1036,7 @@ async function getTableData(tablePrefix, tableName, tableType, arr, permList, er
           // save data to file
           tableData.rows.forEach((row) => { file.write(`"${row.join('";"')}"\n`); });
         }
-      // response has no data branch
+        // response has no data branch
       } else {
         console.log('\x1b[31m%s\x1b[0m', `${tablePrefix} ${tableName} - ${progressIndex}  @getTableData::ERROR getData NO DATA >>`);
         // console.log(tempData);
@@ -1045,7 +1045,7 @@ async function getTableData(tablePrefix, tableName, tableType, arr, permList, er
         // save error to log
         errorFile.write(`${tablePrefix};${tableName};${progressIndex};getTableData;NO DATA\n`);
       }
-    // response is undefined
+      // response is undefined
     } else {
       console.log('\x1b[31m%s\x1b[0m', `${tablePrefix} ${tableName} - ${progressIndex}  @getTableData::ERROR getData sends "undefined" >>`);
       // console.log(tempData);
@@ -1175,7 +1175,7 @@ async function getTable(dbStartTime, dbStartDate, tableId) {
   if (tablesList.length === 0) {
     console.log(`ERROR: no table with ${tableId} name was found!`);
 
-  // if table was found
+    // if table was found
   } else {
     // assign found table to element
     const element = tablesList[0];
@@ -1220,7 +1220,7 @@ async function getTable(dbStartTime, dbStartDate, tableId) {
 
       const passedTime = new Date() - dbStartTime;
       console.info('\x1b[33m%s\x1b[0m', `Elapsed execution time: ${Math.floor(passedTime / 1000)}s`);
-    // end for loop
+      // end for loop
     }
     // end test individual table
   }
@@ -1314,8 +1314,8 @@ function getTables(dbStartTime, dbStartDate, tableArray = []) {
           console.log('\x1b[32m%s\x1b[0m', `\n${tablePrefix} ${tableName} @downloadDB:: file already exists, next table ...`);
         } else {
           // create CSV file to stop other processes from working on it
-            fs.writeFileSync(`${csvOutputPath}/${currentDate}_${tablePrefix}_${tableName}.csv`, '', 'utf8');
-            console.log('\x1b[32m%s\x1b[0m', `\n${tablePrefix} ${tableName} @downloadDB:: file created, start process ...`);
+          fs.writeFileSync(`${csvOutputPath}/${currentDate}_${tablePrefix}_${tableName}.csv`, '', 'utf8');
+          console.log('\x1b[32m%s\x1b[0m', `\n${tablePrefix} ${tableName} @downloadDB:: file created, start process ...`);
 
           // download table from DB
           try {
@@ -1333,12 +1333,12 @@ function getTables(dbStartTime, dbStartDate, tableArray = []) {
           const passedTime = new Date() - dbStartTime;
           console.info('\x1b[33m%s\x1b[0m', `Elapsed execution time: ${Math.floor(passedTime / 1000)}s`);
         };
-      // end for loop
+        // end for loop
       }
       // end batchArray forEach loop
     });
 
-  // if table array is provided, get all tables from array
+    // if table array is provided, get all tables from array
   } else {
     // for each table header get table data
     tableArray.forEach(async (tableId) => {
@@ -1385,7 +1385,7 @@ function getTables(dbStartTime, dbStartDate, tableArray = []) {
         const passedTime = new Date() - dbStartTime;
         console.info('\x1b[33m%s\x1b[0m', `Elapsed execution time: ${Math.floor(passedTime / 1000)}s`);
       }
-    // end for loop
+      // end for loop
     });
   }
 }
@@ -1490,7 +1490,7 @@ function downloadDB() {
   if (argument === '-t' || argument === '--test') {
     getTables(dbStartTime, dbStartDate, testArray);
 
-  // else if argument is 'tl' or 'testluni', check which tables have 'luni' for time column
+    // else if argument is 'tl' or 'testluni', check which tables have 'luni' for time column
   } else if (argument === '-tl' || argument === '--testluni') {
     // read table headers from file
     const tempoL3 = readFile(tempoL3File);
@@ -1506,15 +1506,15 @@ function downloadDB() {
     // remove tables
     removeTables(dbStartTime, dbStartDate, removeArray);
 
-  // else if argument is 'c' or 'check', check which tables are not in file logs / are unsuccessful
+    // else if argument is 'c' or 'check', check which tables are not in file logs / are unsuccessful
   } else if (argument === '-c' || argument === '--check') {
     checkLogs();
 
-  // else if argument is not '', download table with given name
+    // else if argument is not '', download table with given name
   } else if (argument !== '') {
     getTable(dbStartTime, dbStartDate, argument);
 
-  // else, download all tables
+    // else, download all tables
   } else {
     getTables(dbStartTime, dbStartDate);
   }
