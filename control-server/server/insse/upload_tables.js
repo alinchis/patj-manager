@@ -51,9 +51,33 @@ function readFile(filePath) {
     return {};
 }
 
+
+// ///////////////////////////////////////////////////////////////////////////////////////
+// // group tables into area categories: Country; Macro-Regions, Regions and Counties; Localities
+function groupTables() {
+    // read table ancestors from file
+    // const tempoL1 = readFile(tempoL1File);
+    // const ancestors = tempoL1.level1;
+    const tempoL3 = readFile(tempoL3File);
+
+    // filter the tables containing localities data ( 82 tables )
+    const localitiesArr = tempoL3.level3.filter(item => item.matrixName.includes('si localitati'));
+    console.log(`\n Localities Tables = ${localitiesArr.length}\n`);
+
+    // filter the tables containing counties data ( 263 tables )
+    const countiesArr = tempoL3.level3.filter(item => item.matrixName.includes('si judete'));
+    console.log(`\n Counties Tables = ${countiesArr.length}\n`);
+
+    // filter the tables containing counties data ( 317 tables )
+    const regionsArr = tempoL3.level3.filter(item => item.matrixName.includes('judete') && !item.matrixName.includes('si judete') && !item.matrixName.includes('si localitati'));
+    console.log(`\n Regions Tables = ${regionsArr.length}\n`);
+    for (const item of regionsArr) {
+        console.log(item.matrixName);
+    }
+}
+
 // ///////////////////////////////////////////////////////////////////////////////////////
 // // extract counties from files that have localities level data
-
 function extractCounties(exTable) {
 
     // start timer
@@ -61,6 +85,9 @@ function extractCounties(exTable) {
     const dbStartDate = dateFormat(dbStartTime, 'isoDate');
     console.log('\x1b[33m%s\x1b[0m', '@extractCounties:: Timer started\n');
     console.log(`${dbStartTime}`);
+
+    // create missing tables array
+    const missingTables = [];
 
     // read table ancestors from file
     // const tempoL1 = readFile(tempoL1File);
@@ -72,15 +99,19 @@ function extractCounties(exTable) {
 
     // save list to file
     const indexListStream = fs.createWriteStream(`${extractsOutputPath}/index_list.csv`);
-    indexListStream.write('"indicator";"nume"\n');
+    indexListStream.write('"indicator";"an_min";"an_max";"nume"\n');
 
     // for each table, filter the given county
     childrenArr.forEach((child, index) => {
         const tableName = child.tableName;
-        // save item to index file
-        const writeLine = `"${tableName}";"${child.matrixName}"\n`;
-        indexListStream.write(writeLine);
-        indexListStream.on('error', (err) => { console.log(`ERROR:: Write Stream: ${err}`); });
+        // creat year array for each table
+        let yearIndex = -1;
+        const yearArr = [];
+
+        // // save item to index file
+        // const writeLine = `"${tableName}";"${child.matrixName}"\n`;
+        // indexListStream.write(writeLine);
+        // indexListStream.on('error', (err) => { console.log(`ERROR:: Write Stream: ${err}`); });
 
         // console.log(child);
         // const tableIndex = ancestors.filter(item => item.context.code === tableCode)[0].context.name.split(' ')[0].replace('.', '');
@@ -114,17 +145,28 @@ function extractCounties(exTable) {
             // parse each line
             rl.on('line', (line) => {
                 lineCounter += 1;
+                // create line arr
+                const rawLineArr = line.split(';');
                 // if header line
                 if (lineCounter === 1) {
                     let newLine = line.replace(/;(Localitati)\s*;/gm, ';SIRUTA;$1;');
                     newLine = newLine.replace(/;(Municipii si orase)\s*;/gm, ';SIRUTA;$1;');
                     streams.forEach(stream => stream.write(`${newLine}\n`));
+                    // get year column index
+                    yearIndex = rawLineArr.indexOf('Ani');
                     // print new header to console
                     console.log(`\n${index} :: ${currentFileName}: HEADER`);
                     console.log(newLine);
+                    console.log(`year column index = ${yearIndex}`);
                 // if data line
                 } else {
+                    // check if year value is included in the array
+                    const yearValue = rawLineArr[yearIndex].replace(/"/g, '');
+                    // console.log(`\n${index} :: ${currentFileName}: year value = ${yearValue}`);
+                    if (!yearArr.includes(yearValue)) yearArr.push(yearValue);
+                    // for each county
                     streams.forEach((stream, itemIndex) => {
+                        // check if line includes wanted data
                         if (line.includes(exTable[itemIndex].name)) {
                             // console.log(`\n${line}`);
                             const newLine = line.replace(/;"(\d+)\s([^"]+)";/gm, ';"$1";"$2";');
@@ -136,8 +178,16 @@ function extractCounties(exTable) {
             rl.on('close', () => {
                 // console.log(line);
                 console.log(`${index} :: ${currentFileName}: done reading file.`);
+                // save item to index file
+                console.log(`\n${index} :: ${currentFileName}: yearArr.length = ${yearArr.length}`);
+                const writeLine = `"${tableName}";"${Math.min(...yearArr)}";"${Math.max(...yearArr)}";"${child.matrixName.trim()}"\n`;
+                indexListStream.write(writeLine);
+                indexListStream.on('error', (err) => { console.log(`ERROR:: Write Stream: ${err}`); });
                 streams.forEach(stream => stream.close());
             });
+        } else {
+            console.log('\x1b[33m%s\x1b[0m', `file ${index}::${tableName} NOT FOUND!`);
+            missingTables.push(tableName);
         }
 
     // close index file
@@ -150,6 +200,8 @@ function extractCounties(exTable) {
     // end timer
     const dbDuration = new Date() - dbStartTime;
     console.info('\x1b[33m%s\x1b[0m', `\nProcess execution time: ${Math.floor(dbDuration / 1000)}s`);
+    console.log('\x1b[33m%s\x1b[0m', `\nMissing tables: ${missingTables.length}`);
+    console.log(missingTables);
 }
 
 
@@ -663,18 +715,6 @@ async function extractLocality(countyId, localityName, localityYear) {
 
 
 // ////////////////////////////////////////////////////////////////////////////
-// // create and upload tempo_geography
-
-function uploadGeography() {
-    // create table to hold data
-    const dataTable = [];
-
-    // create header
-    const dataHeader = ['siruta', 'siruta_sup', 'name_ro', 'name_en'];
-}
-
-
-// ////////////////////////////////////////////////////////////////////////////
 // // MAIN FUNCTION
 
 function main() {
@@ -730,7 +770,7 @@ function main() {
     if (argument === '-h') {
         console.log(helpText);
 
-    // 2. else if argument is 'e' or 'extract', check which tables have 'luni' for time column
+    // 2. else if argument is 'e'
     } else if (argument === '-e') {
         // extract counties from the localities level tables
         extractCounties(exTable);
@@ -773,10 +813,11 @@ function main() {
         console.log('extract all data for one table');
         extractLocality('SV', 'Municipiul Suceava', '2011');
 
-    // 5. create table tempo_geography
-    } else if (argument === '-u1') {
-        console.log('tempo_geography:: START\n');
-        uploadGeography();
+    // 5. group tables into area categories
+    } else if (argument === '-g3') {
+        console.log('group tables:: START\n');
+        groupTables();
+
     // else print help
     } else {
         console.log(helpText);
