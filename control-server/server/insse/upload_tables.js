@@ -588,7 +588,7 @@ async function extractLocality(countyId, localityName, localityYear) {
     // read tables list from files
     let selectedTArr = [];
     try {
-        const selectedTables = fs.readFileSync(`${extractsOutputPath}/index_list.csv`, 'utf8').split('\n');
+        const selectedTables = fs.readFileSync(`${extractsOutputPath}/localities/template-index_list.csv`, 'utf8').split('\n');
         // remove last item (empty item generated from split)
         selectedTables.pop();
         selectedTArr = selectedTables.map(line => line.replace(/"/g, '').split(';')).slice(1);
@@ -618,13 +618,14 @@ async function extractLocality(countyId, localityName, localityYear) {
 
         // get fileName for given tableId
         const fileName = `????-??-??_*_${tableName}.csv`;
+        const countyPath = `${extractsOutputPath}/${countyId}`;
         // test if file exists
-        if (glob.sync(fileName, { cwd: csvOutputPath }).length > 0) {
+        if (glob.sync(fileName, { cwd: countyPath }).length > 0) {
             console.log(`file ${tableName} found`);
 
             // get actual filename
-            const currentFileName = glob.sync(fileName, { cwd: csvOutputPath })[0];
-            const currentFilePath = `${extractsOutputPath}/${countyId}/${currentFileName}`;
+            const currentFileName = glob.sync(fileName, { cwd: countyPath })[0];
+            const currentFilePath = `${countyPath}/${currentFileName}`;
             console.log(`${i} :: ${currentFileName}: START`);
 
             // open stream for read
@@ -711,6 +712,122 @@ async function extractLocality(countyId, localityName, localityYear) {
     for (let j = 0; j < tableCount.length; j += 1) {
         console.log(`${tableCount[j]}: ${selectedTArr[j][0]}`);
     }
+}
+
+
+// ///////////////////////////////////////////////////////////////////////////////////////
+// // set thousands marker
+
+function numberWithCommas(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+
+// ///////////////////////////////////////////////////////////////////////////////////////
+// // extract locality - extract all data for requested locality
+
+function formatLocality(countyId, localityName, localityYear) {
+    // local constants
+    const localitiesPath = `${extractsOutputPath}/localities`;
+    const countyPath = `${localitiesPath}/${countyId}`;
+    const targetFileName = `${localityYear}_${countyId}_${localityName}`;
+    const outFileName = `${targetFileName}-formated.csv`;
+
+    // read template file
+    let indexArr = [];
+    try {
+        const lines = fs.readFileSync(`${localitiesPath}/template.csv`, 'utf8').split('\n');
+        // remove last item (empty item generated from split)
+        lines.pop();
+        indexArr = lines.map(line => line.replace(/"/g, '').split(';'));
+        console.log(`@formatLocality :: template file >> read ${indexArr.length} lines total\n`);
+    } catch (e) {
+        console.log('Error: ', e.stack);
+    }
+
+    // read target file
+    let targetArr = [];
+    try {
+        const lines = fs.readFileSync(`${countyPath}/${targetFileName}.csv`, 'utf8').split('\n');
+        // remove last item (empty item generated from split)
+        lines.pop();
+        targetArr = lines.map(line => line.replace(/"/g, '').split(';'));
+        console.log(`@formatLocality :: target file >> read ${targetArr.length} lines total\n`);
+    } catch (e) {
+        console.log('Error: ', e.stack);
+    }
+
+    // open write out file
+    const outStream = fs.createWriteStream(`${countyPath}/${outFileName}`);
+    // write header to out file
+    outStream.write(`${indexArr[0].join(';')}\n`);
+
+    // previous template full index line /item
+    let prevIndexLine = 1;
+
+    // set indexes for template
+    const templateIndexIndex = 0;
+    const templateDivisionsIndex = 1;
+    const templateSubdivisionsIndex = 2;
+    const templateValueIndex = 3;
+    const templateUmIndex = 4;
+
+    // set indexes for target
+    const targetTableIndex = 0;
+    const targetIndexIndex = 1;
+    const targetDivisionsIndex = 2;
+    const targetSubdivisionsIndex = 3;
+    const targetPeriodsIndex = 4;
+    const targetUmIndex = 5;
+    const targetValueIndex = 6;
+    const targetDataqltyIndex = 7;
+
+    // for each line in template file match line in target file
+    for (let i = 1; i < indexArr.length; i += 1) {
+        let currentTemplateItem = '';
+        let currentTargetItem = '';
+
+        // set found marker
+        let found = false;
+
+        // if current line doesn't have index item /is a division of a previous index
+        if (indexArr[i][templateIndexIndex] !== '') {
+            // update previous index line
+            prevIndexLine = i;
+            // update current template item
+            currentTemplateItem = `${indexArr[i][templateIndexIndex]};${indexArr[i][templateDivisionsIndex]};${indexArr[i][templateSubdivisionsIndex]}`;
+        } else {
+            console.log(`${i} :: ${indexArr[i].join(';')}\n`);
+            currentTemplateItem = `${indexArr[prevIndexLine][templateIndexIndex]};${indexArr[i][templateDivisionsIndex]};${indexArr[i][templateSubdivisionsIndex]}`;
+        }
+
+        // for each line in target array check for match with current template item
+        for (let j = 1; j < targetArr.length; j += 1) {
+            currentTargetItem = `${targetArr[j][targetIndexIndex]};${targetArr[j][targetDivisionsIndex]};${targetArr[j][targetSubdivisionsIndex]}`;
+
+            // check if template and target items are the same
+            if (currentTemplateItem === currentTargetItem && targetArr[j][targetPeriodsIndex] === 'anual') {
+                // update marker
+                found = true;
+                // prepare new line
+                const currentIndexItem = `${indexArr[i][templateIndexIndex].trim()};${indexArr[i][templateDivisionsIndex]};${indexArr[i][templateSubdivisionsIndex]}`;
+                console.log(`${currentIndexItem}`);
+                const writeLine = `${currentIndexItem};${numberWithCommas(targetArr[j][targetValueIndex])};${targetArr[j][targetUmIndex]}`;
+                // write to file
+                outStream.write(`${writeLine}\n`);
+            }
+        }
+
+        // if index not found, add 0 value item
+        if (!found) {
+            const currentIndexItem = `${indexArr[i][templateIndexIndex].trim()};${indexArr[i][templateDivisionsIndex]};${indexArr[i][templateSubdivisionsIndex]}`;
+            const writeLine = `${currentIndexItem};0;${indexArr[i][templateUmIndex]}`;
+            outStream.write(`${writeLine}\n`);
+        }
+    }
+
+    // end
+    console.log(`@formatLocality :: "${outFileName}" DONE\n`);
 }
 
 
@@ -811,9 +928,16 @@ function main() {
     // 4. extract all data for one locality for one year
     } else if (argument === '-e1') {
         console.log('extract all data for one table');
-        extractLocality('SV', 'Municipiul Suceava', '2011');
+        // extractLocality('SV', 'Municipiul Suceava', '2011');
+        extractLocality('TL', 'Municipiul Tulcea', '2011');
 
-    // 5. group tables into area categories
+    // 5. format locality data according to template
+    } else if (argument === '-e2') {
+        console.log('format locality data file');
+        // extractLocality('SV', 'Municipiul Suceava', '2011');
+        formatLocality('TL', 'Municipiul Tulcea', '2011');
+
+    // 6. group tables into area categories
     } else if (argument === '-g3') {
         console.log('group tables:: START\n');
         groupTables();
