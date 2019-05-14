@@ -864,7 +864,7 @@ function main() {
     ];
 
     // get third command line argument
-    const argument = process.argv[2] || '--help';
+    const argument = process.argv[2] || '-h';
     let batchArg = 0;
     const tableIds = [];
     let countiesIds = [];
@@ -929,13 +929,16 @@ function main() {
     } else if (argument === '-e1') {
         console.log('extract all data for one table');
         // extractLocality('SV', 'Municipiul Suceava', '2011');
-        extractLocality('TL', 'Municipiul Tulcea', '2011');
+        // extractLocality('TL', 'Municipiul Tulcea', '2011');
+        extractLocality('SJ', 'Municipiul Zalau', '2011');
+
 
     // 5. format locality data according to template
     } else if (argument === '-e2') {
         console.log('format locality data file');
-        // extractLocality('SV', 'Municipiul Suceava', '2011');
-        formatLocality('TL', 'Municipiul Tulcea', '2011');
+        // formatLocality('SV', 'Municipiul Suceava', '2011');
+        // formatLocality('TL', 'Municipiul Tulcea', '2011');
+        formatLocality('SJ', 'Municipiul Zalau', '2011');
 
     // 6. group tables into area categories
     } else if (argument === '-g3') {
