@@ -1,0 +1,89 @@
+{
+  "items": [
+    {
+      "filePath": ".",
+      "fileName": "iso-639-3_20190408.tab",
+      "fileType": "tab",
+      "fileTypeDetails": {
+        "separator": "tab",
+        "encoding": "UTF-8"
+      },
+      "tableName": "ISO_639-3",
+      "keywords": [
+        "iso",
+        "iso-639-3",
+        "sil",
+        "language",
+        "code",
+        "set"
+      ],
+      "comments": "NOTE: The \"Ref_Name\" column in this table contains a reference name by which this language is identified in the standard. The Reference Name is employed for ease of use of the code set, and does not imply it is to be preferred in any application to any other name that may be associated with the particular code element as given in the Language Names Index.",
+      "methodology": "",
+      "url": "https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3.tab"
+    },
+    {
+      "filePath": ".",
+      "fileName": "iso-639-3-macrolanguages_20190408.tab",
+      "fileType": "tab",
+      "fileTypeDetails": {
+        "separator": "tab",
+        "encoding": "UTF-8"
+      },
+      "tableName": "ISO_639-3_Macrolanguages",
+      "keywords": [
+        "iso",
+        "iso-639-3",
+        "sil",
+        "language",
+        "macrolanguage",
+        "mapping"
+      ],
+      "comments": "",
+      "methodology": "",
+      "url": "https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3-macrolanguages.tab"
+    },
+    {
+      "filePath": ".",
+      "fileName": "iso-639-3_Name_Index_20190408.tab",
+      "fileType": "tab",
+      "fileTypeDetails": {
+        "separator": "tab",
+        "encoding": "UTF-8"
+      },
+      "tableName": "ISO_639-3_Names",
+      "keywords": [
+        "iso",
+        "iso-639-3",
+        "sil",
+        "language",
+        "name",
+        "index"
+      ],
+      "comments": "In ISO 639-2, there are multiple name forms for some identified languages. The ISO 639-3 code tables now include a language name index with multiple names associated many code elements (primarily in English forms or variant anglicized spellings of indigenous names). The reference name from the Ref_Name field of the main table is included as an entry in this table, thus every code element has at least one row occurrence in the Language Names Index table. The name appears in two forms, a \"print\" form used in most contexts, and an inverted form which fronts a language name root, e.g., \"Isthmus Zapotec\" and \"Zapotec, Isthmus\". Where there is no root part to the name, the Print_Name and the Inverted_Name contain identical strings. ",
+      "methodology": "",
+      "url": "https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3_Name_Index.tab"
+    },
+    {
+      "filePath": ".",
+      "fileName": "iso-639-3_Retirements_20190408.tab",
+      "fileType": "tab",
+      "fileTypeDetails": {
+        "separator": "tab",
+        "encoding": "UTF-8"
+      },
+      "tableName": "ISO_639-3_Retirements",
+      "keywords": [
+        "iso",
+        "iso-639-3",
+        "sil",
+        "language",
+        "mapping",
+        "retired",
+        "code elements"
+      ],
+      "comments": "The annual update to the 639-3 code set will include a complete listing of the code elements that have been deprecated with instructions on how to update existing data. Although the word \"retired\" was previously used for codes no longer in use, we now use the word \"deprecated\" as the code will continue to have the same meaning that was originally established for it. Deprecated codes are not reused for another meaning in the code set.\nSince the initial release of ISO/FDIS 639-3 and prior to the release of ISO 639-3, there was one list of retirements (deprecations), a correction to the alignment between ISO 639-3 and ISO 639-2. It is included in the Deprecated Code Element Mappings because it has been a source of confusion for users.",
+      "methodology": "",
+      "url": "https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3_Retirements.tab"
+    }
+  ]
+}

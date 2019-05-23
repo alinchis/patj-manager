@@ -55,8 +55,8 @@ class tempo_chapters {
         const { level1 } = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
         return level1
             .map((item) => {
-                const newIndex = item.context.name.replace(/^(.\.\d*)\s+.*$/g, `$1`);
-                const newName = item.context.name.replace(/^.\.\d*\s+/g, '');
+                const newIndex = item.context.name.replace(/^(.?\.?\d*\.?)\s+.*$/g, `$1`);
+                const newName = item.context.name.replace(/^.?\.?\d*\.?\s+/g, '');
 
                 return {
                     parent_code: item.parentCode,
