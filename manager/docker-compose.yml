@@ -2,6 +2,19 @@ version: "3"
 
 services:
 
+  gate-server:
+    build: "../docker-containers/gate-server"
+    image: alinchis/gate-server
+    volumes:
+      - "../gate-server/log:/var/log/nginx"
+      - "../gate-server/config/nginx.conf:/etc/nginx/nginx.conf"
+    working_dir: /root/patj-manager/gate-server
+    depends_on: 
+      - "display-server"
+    ports:
+      - "8000:80"
+    restart: always
+
   control-server:
     build: "../docker-containers/control-server"
     image: alinchis/control-server
